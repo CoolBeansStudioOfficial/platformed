@@ -1,10 +1,13 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { calcAdjacentAdjacency, calculateAdjacency, enemies } from "./platformer.js"
 import { canvas, ctx, drawMap } from "./renderer.js"
 import { mode, input, key } from "./site.js"
 import { state } from "./state.js"
 const { editor } = state
 =======
+=======
+>>>>>>> Stashed changes
 import { decodeRLE, sortByCategory, input, drawSelectedTileImage, mode, drawMap } from "./ui.js"
 import { enemies, player } from "./platformer.js"
 

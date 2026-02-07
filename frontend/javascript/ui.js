@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { createMap } from "./file-utils.js"
 import { importMap } from "./file-utils.js"
 import { mode, setMode } from "./site.js"
@@ -50,6 +51,8 @@ export function sortByCategory(category) {
       tileSelect.style.display = 'block'
       tileCount++
 =======
+=======
+>>>>>>> Stashed changes
 import { zoomMap, initEditor, setEditorParamsFromJSON, saveMap, editor, changeSelectedTile } from "./editor.js"
 import { player, initPlatformer } from "./platformer.js"
 
@@ -147,6 +150,11 @@ export function drawSelectedTileImage(img, cursorScrX, cursorScrY, tileSize) {
 
 <<<<<<< Updated upstream
 =======
+export function drawImage(sprite, x, y, w, h) {
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(sprite, x, y, w, h)
+}
+
 export function drawImage(sprite, x, y, w, h) {
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(sprite, x, y, w, h)
@@ -264,7 +272,10 @@ zoomOut.addEventListener('click', () => {
 })
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 export let mode = "editor"
 
 >>>>>>> Stashed changes
@@ -275,7 +286,12 @@ play.addEventListener('click', () => {
         play.src = "./assets/icons/stop_noborder.svg"
     } else {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         initEditor()
+=======
+        toggleEditorUI(on)
+        initEditor(false)
+>>>>>>> Stashed changes
 =======
         toggleEditorUI(on)
         initEditor(false)

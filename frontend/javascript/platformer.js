@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { toggleEditorUI, updateCanvasSize, sortByCategory } from "./ui.js"
 import { canvas, ctx, drawEnemies, drawMap, drawPlayer, getCameraCoords } from "./renderer.js"
 import { endLevel, key } from "./site.js"
@@ -128,6 +129,10 @@ export function calcAdjacentAdjacency(centerTileIdx) {
 =======
 import { drawImage, endLevel, input, mode } from "./ui.js"
 
+=======
+import { drawImage, endLevel, input, mode } from "./ui.js"
+
+>>>>>>> Stashed changes
 export const enemies = []
 
 export const player = {
@@ -169,6 +174,9 @@ export const player = {
   controlTimer: 0,
   controlMultiplier: 1,
   dissipations: [] // each item has a timeToDissapate, timeToReturn, timer, and tileIdx
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }
 
@@ -221,11 +229,14 @@ function scanLevelOnPlay() {
 
 export function initPlatformer() {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   console.log(player)
   toggleEditorUI(false)
   player.x = editor.playerSpawn.x
   player.y = editor.playerSpawn.y
 =======
+=======
+>>>>>>> Stashed changes
   lastTime = 0
 >>>>>>> Stashed changes
   player.w = player.tileSize
@@ -244,6 +255,9 @@ export function initPlatformer() {
 <<<<<<< Updated upstream
 =======
   platformerLoop()
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }
 
@@ -818,5 +832,9 @@ function logCurrentMapAsJSON() {
   if (mode == 'play') {
     requestAnimationFrame(platformerLoop)
   }
+<<<<<<< Updated upstream
+}
+>>>>>>> Stashed changes
+=======
 }
 >>>>>>> Stashed changes
