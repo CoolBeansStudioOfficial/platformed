@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { createMap } from "./file-utils.js"
 import { importMap } from "./file-utils.js"
 import { mode, setMode } from "./site.js"
@@ -48,6 +49,91 @@ export function sortByCategory(category) {
       }
       tileSelect.style.display = 'block'
       tileCount++
+=======
+import { zoomMap, initEditor, setEditorParamsFromJSON, saveMap, editor, changeSelectedTile } from "./editor.js"
+import { player, initPlatformer } from "./platformer.js"
+
+function init() {
+    initEditor(true)
+    updateCanvasSize()
+}
+
+export function endLevel() {
+    mode = "editor"
+    setTimeout(initEditor(false), 1);
+}
+
+//canvas stuff
+const canvas = document.querySelector("canvas")
+const dpr = window.devicePixelRatio
+const ctx = canvas.getContext('2d')
+const rect = canvas.getBoundingClientRect()
+canvas.width = rect.width
+canvas.height = rect.height
+
+ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+ctx.imageSmoothingEnabled = false
+canvas.style.imageRendering = 'pixelated'
+
+function updateCanvasSize() {
+    const rect = canvas.getBoundingClientRect()
+    canvas.width = rect.width
+    canvas.height = rect.height
+    ctx.imageSmoothingEnabled = false
+    canvas.style.imageRendering = 'pixelated'
+}
+
+export function drawMap(tileSize, cam) {
+    let { map, tileset } = editor
+
+    const startX = Math.floor(cam.x / tileSize)
+    const endX = startX + (canvas.width / tileSize) + 1
+    const startY = Math.floor(cam.y / tileSize)
+    const endY = startY + (canvas.width / tileSize) + 1
+
+    ctx.fillStyle = '#C29A62'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    for (let y = startY; y < endY; y++) {
+        for (let x = startX; x < endX; x++) {
+            if (x < 0 || x >= map.w || y < 0 || y >= map.h) continue
+            const raw = map.tiles[y * map.w + x]
+            const tileId = raw >> 4
+            const scrX = Math.floor((x * tileSize) - cam.x)
+            const scrY = Math.floor((y * tileSize) - cam.y)
+            const selectedTile = tileset[tileId]
+            let showTile = true
+            if (tileset[tileId] && tileset[tileId].mechanics && tileset[tileId].mechanics.includes("hidden") && mode == 'play') {
+                showTile = false
+            }
+            if (player.collectedCoinList.includes(y * map.w + x) && mode === 'play') {
+                showTile = false
+            }
+            if (selectedTile.type == 'enemy' && mode == 'play') {
+                showTile = false
+            }
+            if (selectedTile.type == 'adjacency' && showTile) {
+                ctx.drawImage(selectedTile.images[raw & 15], scrX, scrY, tileSize, tileSize)
+            } else if (selectedTile.type == "rotation" && showTile) {
+                ctx.drawImage(selectedTile.images[raw & 15], scrX, scrY, tileSize, tileSize)
+            } else if (selectedTile.type == 'standalone' && showTile) {
+                ctx.drawImage(selectedTile.image, scrX, scrY, tileSize, tileSize)
+            } else if (selectedTile.type == 'enemy' && showTile) {
+                ctx.drawImage(selectedTile.image, scrX, scrY, tileSize, tileSize)
+            }
+        }
+    }
+}
+
+export function drawSelectedTileImage(img, cursorScrX, cursorScrY, tileSize) {
+    if (img) {
+        ctx.save()
+        ctx.imageSmoothingEnabled = false
+        canvas.style.imageRendering = 'pixelated'
+        ctx.globalAlpha = 0.5
+        ctx.drawImage(img, cursorScrX, cursorScrY, tileSize, tileSize)
+        ctx.restore()
+>>>>>>> Stashed changes
     } else {
       tileSelect.style.display = 'none'
     }
@@ -59,6 +145,34 @@ export function sortByCategory(category) {
   return tileCount
 }
 
+<<<<<<< Updated upstream
+=======
+export function drawImage(sprite, x, y, w, h) {
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(sprite, x, y, w, h)
+}
+
+//input handling
+export const input = {
+    x: 0,
+    y: 0,
+    down: false,
+    keys: {}
+}
+
+window.addEventListener('keydown', e => input.keys[e.key] = true)
+window.addEventListener('keyup', e => input.keys[e.key] = false)
+
+canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect()
+    input.x = e.clientX - rect.left
+    input.y = e.clientY - rect.top
+})
+canvas.addEventListener('mousedown', () => input.down = true)
+canvas.addEventListener('mouseup', () => input.down = false)
+
+
+>>>>>>> Stashed changes
 // page event listeners
 const eraserButton = document.querySelector('.eraser')
 const saveButton = document.querySelector('.save')
@@ -149,13 +263,23 @@ zoomOut.addEventListener('click', () => {
   zoomMap(true)
 })
 
+<<<<<<< Updated upstream
+=======
+export let mode = "editor"
+
+>>>>>>> Stashed changes
 play.addEventListener('click', () => {
   mode = mode === 'editor' ? 'play' : 'editor'
     if (mode == 'play') {
         initPlatformer()
         play.src = "./assets/icons/stop_noborder.svg"
     } else {
+<<<<<<< Updated upstream
         initEditor()
+=======
+        toggleEditorUI(on)
+        initEditor(false)
+>>>>>>> Stashed changes
         play.src = "./assets/icons/play_nofill.svg"
     }
 }) 
@@ -252,6 +376,76 @@ export function addTileSelection() {
         changeSelectedTile(Number(div.dataset.tile))
       })
     }
+<<<<<<< Updated upstream
   }
   sortByCategory("")
 }
+=======
+    return out
+}
+
+function importMap(e) {
+    const file = e.target.files && e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onerror = () => console.error('failed to read file', reader.error)
+    reader.onload = () => {
+        const json = JSON.parse(reader.result)
+        //import player settings
+        player.jumpHeight = json.jumpHeight
+        jumpHeightSlider.value = json.jumpHeight
+        player.jumpWidth = json.jumpWidth
+        jumpWidthSlider.value = json.jumpWidth
+        player.yInertia = json.yInertia
+        verticalInertiaSlider.value = json.yInertia
+        player.xInertia = json.xInertia
+        horizontalInertiaSlider.value = json.xInertia
+        if (json.bouncePadHeight) {
+            bouncePadHeightSlider.value = json.bouncePadHeight
+            player.bouncePadHeight = json.bouncePadHeight
+        }
+        if (json.zoom) {
+            zoomSlider.value = (json.zoom / (32 / 0.6))
+            player.tileSize = json.zoom
+        }
+        player.wallJump = json.wallJump
+
+        //import level editor settings and map
+        setEditorParamsFromJSON(json)
+    }
+    reader.readAsText(file)
+}
+
+export function sortByCategory(category) {
+    let tileCount = 0
+    const tileSelects = document.querySelectorAll('.tile-select-container')
+    let lowestIndexBlock
+    tileSelects.forEach(tileSelect => {
+        if (tileSelect.dataset.category == category) {
+            if (!lowestIndexBlock || tileSelect.dataset.tile < lowestIndexBlock) {
+                lowestIndexBlock = tileSelect.dataset.tile
+            }
+            tileSelect.style.display = 'block'
+            tileCount++
+        } else {
+            tileSelect.style.display = 'none'
+        }
+        if (lowestIndexBlock) {
+            changeSelectedTile(Number(lowestIndexBlock))
+        }
+    })
+    updateCanvasSize()
+    return tileCount
+}
+
+function toggleEditorUI(on) {
+    const grid = document.querySelector(".grid")
+    if (on) {
+        grid.classList.add("grid-uihidden")
+    } else {
+        grid.classList.remove("grid-uihidden")
+    }
+}
+
+init()
+>>>>>>> Stashed changes

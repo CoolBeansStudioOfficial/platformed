@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { toggleEditorUI, updateCanvasSize, sortByCategory } from "./ui.js"
 import { canvas, ctx, drawEnemies, drawMap, drawPlayer, getCameraCoords } from "./renderer.js"
 import { endLevel, key } from "./site.js"
@@ -124,6 +125,51 @@ export function calcAdjacentAdjacency(centerTileIdx) {
   })
 
   return centerVal
+=======
+import { drawImage, endLevel, input, mode } from "./ui.js"
+
+export const enemies = []
+
+export const player = {
+  dieCameraTime: 30, // frames
+  dieCameraTimer: 30,
+  dieCameraStart: {},
+  died: false,
+  collectedCoins: 0,
+  collectedCoinList: [],
+  cam: {x: 0, y: 0},
+  vy: 0,
+  vx: 0, 
+  jumpHeight: 2.5,
+  yInertia: 1,
+  jumpWidth: 7,
+  xInertia: 1.5,
+  bouncePadHeight: 8,
+  x: 0, 
+  y: 0,
+  w: 30,
+  h: 30,
+  stopThreshold: 0.4,
+  grounded: false,
+  coyoteTime: 5,
+  coyoteTimer: 0,
+  wallCoyoteTime: 10,
+  wallCoyoteTimer: 0,
+  lastWallSide: 0,
+  jumpBuffer: 10,
+  jumpBufferTimer: 0,
+  tileSize: 64,
+  lastCheckpointSpawn: {x: 0, y: 0},
+  facingLeft: 1,
+  AnimationFrame: 0,
+  AnimationFrameCounter: 0,
+  wallJump: "up",
+  decreaseAirControl: true,
+  autoJump: false,
+  controlTimer: 0,
+  controlMultiplier: 1,
+  dissipations: [] // each item has a timeToDissapate, timeToReturn, timer, and tileIdx
+>>>>>>> Stashed changes
 }
 
 function getJumpHeight(heightInTiles, yInertia, tileSize) {
@@ -174,10 +220,14 @@ function scanLevelOnPlay() {
 }
 
 export function initPlatformer() {
+<<<<<<< Updated upstream
   console.log(player)
   toggleEditorUI(false)
   player.x = editor.playerSpawn.x
   player.y = editor.playerSpawn.y
+=======
+  lastTime = 0
+>>>>>>> Stashed changes
   player.w = player.tileSize
   player.h = player.tileSize
   player.hitboxW = 0.8 * player.tileSize
@@ -191,6 +241,10 @@ export function initPlatformer() {
   player.lastCheckpointSpawn = { x: 0, y: 0 }
   player.collectedCoinList = []
   scanLevelOnPlay()
+<<<<<<< Updated upstream
+=======
+  platformerLoop()
+>>>>>>> Stashed changes
 }
 
 function killPlayer() {
@@ -539,6 +593,72 @@ function updatePhysics(dt) {
 
 }
 
+<<<<<<< Updated upstream
+=======
+function drawPlayer(dt) {
+  player.AnimationFrameCounter += dt
+  if (player.AnimationFrameCounter > 5) {
+    player.AnimationFrame = player.AnimationFrame == 0 ? 1 : 0
+    player.AnimationFrameCounter = 0
+  }
+  if (!player.sprites) return
+  let selectedFrame = 0
+  if ((input.keys["a"] || input.keys["ArrowLeft"]) && (input.keys["d"] || input.keys["ArrowRight"])) {
+    // pressing both keys, don't rapidly switch between frames
+
+  } else if (!player.facingLeft && (input.keys["a"] || input.keys["ArrowLeft"])) {
+    player.facingLeft = 1
+  } else if (player.facingLeft && (input.keys["d"] || input.keys["ArrowRight"])) {
+    player.facingLeft = 0
+  }
+  if (player.grounded) {
+    // has to be one of the first 6
+      if ((input.keys["a"] || input.keys["ArrowLeft"]) && (input.keys["d"] || input.keys["ArrowRight"])) {
+      // pressing both keys, don't rapidly switch between frames
+
+      } else if (input.keys["a"] || input.keys["d"] || input.keys["ArrowRight"] || input.keys["ArrowLeft"]) {
+      // we're moving, calculate the animation frame of the movement
+      selectedFrame = (player.AnimationFrame << 1) + player.facingLeft + 2
+    } else {
+      // on the ground and not moving
+      selectedFrame = player.facingLeft
+    }
+  } else {
+    if (player.vy < 0) {
+      // jumping
+      selectedFrame = 6 + player.facingLeft
+    } else {
+      selectedFrame = 8 + player.facingLeft
+    }
+  }
+
+  drawImage(player.sprites[selectedFrame], Math.floor(player.x - player.cam.x), Math.floor(player.y - player.cam.y), player.w, player.h)
+}
+
+function getCameraCoords() {
+  let x, y
+  if (player.x > player.cam.x + (canvas.width * 0.75)) {
+    // moving right
+    x = player.x - (canvas.width * 0.75)
+  } else if (player.x < player.cam.x + (canvas.width * 0.25)) {
+    // moving left
+    x = player.x - (canvas.width * 0.25)
+  } else {
+    x = player.cam.x
+  }
+  if (player.y > player.cam.y + (canvas.height * 0.5)) {
+    // moving down
+    y = player.y - (canvas.height * 0.5)
+  } else if (player.y < player.cam.y + (canvas.height * 0.25)) {
+    // moving up
+    y = player.y - (canvas.height * 0.25)
+  } else {
+    y = player.cam.y
+  }
+  return {x: x, y: y}
+}
+
+>>>>>>> Stashed changes
 function aabbIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
@@ -612,7 +732,27 @@ function updateEnemyPhysics(dt) {
   }
 }
 
+<<<<<<< Updated upstream
 export function platformerLoop(dt) {
+=======
+function drawEnemies(dt) {
+  enemies.forEach(enemy => {
+    drawImage(editor.tileset[enemy.tileId].image, enemy.x - player.cam.x, enemy.y - player.cam.y, player.tileSize, player.tileSize)
+  })
+}
+
+let lastTime = 0
+function deltaTime(timestamp) {
+  if (!timestamp) timestamp = performance.now()
+  if (lastTime === 0) lastTime = timestamp
+  const seconds = (timestamp - lastTime) / 1000
+  lastTime = timestamp
+  return Math.min(seconds, 0.1)
+}
+
+function platformerLoop(timestamp) {
+  let dt = deltaTime(timestamp)
+>>>>>>> Stashed changes
   let timeScale = dt * 60
 
   player.dissipations.forEach(dissipation => {
@@ -659,15 +799,12 @@ export function platformerLoop(dt) {
     player.cam.x = (editor.map.w * player.tileSize) - canvas.width
   }
 
- 
-  ctx.fillStyle = '#C29A62'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-
   drawMap(player.tileSize, player.cam)
   if (!player.died) {
     drawPlayer(timeScale)
   }
   drawEnemies(timeScale)
+<<<<<<< Updated upstream
 }
 
 let once = true
@@ -676,3 +813,10 @@ function logCurrentMapAsJSON() {
   console.log(createMap(editor.map.w, editor.map.h, Array.from(editor.map.tiles)))
 }
 
+=======
+
+  if (mode == 'play') {
+    requestAnimationFrame(platformerLoop)
+  }
+}
+>>>>>>> Stashed changes
