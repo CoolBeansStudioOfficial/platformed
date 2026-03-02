@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="/javascript/my-levels.js" defer></script>
+  <script src="/javascript/delete.js"></script>
+  <link rel="stylesheet" href="/styles/style.css">
+  <link rel="stylesheet" href="/styles/home.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+  <title>Platformed</title>
+</head>
+
+<body>
+  <div class="grid">
+    <div class="topbar">
+      <a href="/" class="title">Platformed</a>
+      <div class="right-nav">
+        <a href="/editor" target="" class="link-button">Editor</a>
+        <a href="/new" class="link-button">New Level</a>
+      </div>
+    </div>
+    <div class="content">
+      <h1 class="page-title">My Levels</h1>
+      <div class="levels">
+      </div>
+    </div>
+  </div>
+  <div class="overlay" onclick="this.style.display = 'none'">
+    <div class="confirm-delete">
+      <h2>Confirm Delete?</h2>
+      <div class="options">
+        <div id="cancel-button" class="option" onclick="document.querySelector('.menu').style.display = none">
+          <p>Cancel</p>
+        </div>
+        <div id="confirm-button" class="option">
+          <p>Delete</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
