@@ -7,6 +7,31 @@ import { state } from "./state.js";
 import { addTileSelection, needsSmallerLevel } from "./ui.js";
 const { player, editor } = state
 
+function getThemeColor(colorName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(colorName).trim()
+}
+
+export function updateColorTheme() {
+  // get all the colors in the theme and set them in the editor object so we don't have to do getThemeColor each frame
+  const { colorTheme } = editor
+  colorTheme.bgPrimary = getThemeColor('--bg-primary')
+  colorTheme.bgAccent = getThemeColor('--bg-accent')
+  colorTheme.bgLevel = getThemeColor('--bg-level')
+  colorTheme.textOnPrimary = getThemeColor('--text-on-primary')
+  colorTheme.textOnAccent = getThemeColor('--text-on-accent')
+  colorTheme.action = getThemeColor('--action')
+  colorTheme.textOnAction = getThemeColor('--text-on-action')
+  colorTheme.border = getThemeColor('--border')
+}
+
+export function changeColorTheme(themeName) {
+  const root = document.documentElement;
+
+  root.dataset.theme = themeName
+
+  updateColorTheme()
+}
+
 export function drawMinimap() {
   const canvas = document.querySelector(".minimap-canvas")
   if (!canvas) return
@@ -81,7 +106,7 @@ export function drawMap(tileSize = editor.tileSize, cam = editor.cam) {
     }
   }
 
-  if (editor.selection.hasFloatingTiles) {
+  if (editor.selection.hasFloatingTiles && mode !== "play") {
     for (let y = 0; y < editor.map.h; y++) {
       for (let x = 0; x < editor.map.w; x++) {
         const raw = editor.selectionLayer[y * editor.map.w + x]
@@ -118,6 +143,35 @@ export function drawMap(tileSize = editor.tileSize, cam = editor.cam) {
           ctx.drawImage(selectedTile.image, scrX, scrY, tileSize, tileSize);
         } else if (selectedTile && selectedTile.type == 'enemy' && showTile) {
           ctx.drawImage(selectedTile.image, scrX, scrY, tileSize, tileSize);
+        }
+      }
+    }
+  }
+
+  if (player.triggers && editor.showTriggerHighlights && mode !== "play") {
+    for (let trigger of player.triggers) {
+      if (trigger.execute.length !== 0) {
+        let needsTriggerHighlight = false
+        for (const step of trigger.execute) {
+          if (step.type === "teleport") {
+            const scrX = Math.floor((step.x * tileSize) - cam.x)
+            const scrY = Math.floor((step.y * tileSize) - cam.y)
+            if (trigger.color) {
+              ctx.strokeStyle = trigger.color
+            } else {
+              const hue = Math.floor(Math.random() * 360)
+              trigger.color = `hsl(${hue}, 100%, 50%)`
+              ctx.strokeStyle = trigger.color
+            }
+            needsTriggerHighlight = true
+            ctx.lineWidth = 2
+            ctx.strokeRect(scrX, scrY, tileSize, tileSize)
+          }
+        }
+        if (needsTriggerHighlight) {
+          const scrX = Math.floor((trigger.x * tileSize) - cam.x)
+          const scrY = Math.floor((trigger.y * tileSize) - cam.y)
+          ctx.strokeRect(scrX, scrY, tileSize, tileSize)
         }
       }
     }

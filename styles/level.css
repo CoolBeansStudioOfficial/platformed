@@ -13,7 +13,7 @@
   width: min(90vw, 1200px);
   aspect-ratio: 5 / 3;
   max-height: calc(80vh - 80px);
-  border: 4px solid black;
+  border: 4px solid var(--border);
   border-radius: 20px;
   position: relative;
   z-index: 1;
@@ -35,7 +35,7 @@ body .game {
   user-select: none;
 }
 
-.fullscreen {
+body .game.fullscreen {
   position: fixed;
   z-index: 10;
   top: 0;
@@ -45,9 +45,9 @@ body .game {
 
 .fullscreen-control {
   width: 35px;
-  aspect-ratio: 1;
-  background-color: #C29A62;
-  border: 3px solid black;
+  height: 35px;
+  background-color: var(--bg-primary);
+  border: 3px solid var(--border);
   border-radius: 10px;
   position: absolute;
   top: 0;
@@ -72,7 +72,7 @@ body .game {
 
 .win-screen {
   position: absolute;
-  background-color: #c29a62;
+  background-color: var(--bg-primary);
   left: 0;
   top: 0;
   width: 100%;
@@ -94,7 +94,7 @@ body .game {
 }
 
 .win-screen a {
-  color: black;
+  color: var(--text-on-primary);
   font-size: 25px;
 }
 
@@ -103,8 +103,8 @@ body .game {
   border: none;
   background: transparent;
   font-size: 25px;
-  color: #C29A62;
-  background-color: black;
+  color: var(--text-on-action);
+  background-color: var(--action);
   border-radius: 500px;
   padding: 5px 15px;
   font-family: "Fredoka", sans-serif;
@@ -161,21 +161,21 @@ body .game {
   left: 0;
 }
 
-.fullscreen-control img.maximize {
+.fullscreen-control div.maximize {
   width: 30px;
-  aspect-ratio: 1;
+  height: 30px;
 }
 
-.fullscreen-control img.minimize {
+.fullscreen-control div.minimize {
   width: 0;
 }
 
-.fullscreen~.fullscreen-control>.minimize {
+.fullscreen>.fullscreen-control>.minimize {
   width: 30px;
-  aspect-ratio: 1;
+  height: 30px;
 }
 
-.fullscreen~.fullscreen-control>.maximize {
+.fullscreen>.fullscreen-control>.maximize {
   display: none;
 }
 
@@ -244,10 +244,10 @@ canvas {
 
 .edit {
   font-size: 25px;
-  background-color: black;
+  background-color: var(--action);
   outline: none;
   border: none;
-  color: #c29a62;
+  color: var(--text-on-action);
   font-family: "Fredoka", sans-serif;
   border-radius: 10px;
   margin-left: 20px;
@@ -255,12 +255,20 @@ canvas {
   display: flex;
   flex-direction: row;
   text-decoration: none;
+  align-items: center;
 }
 
-a.edit img {
+.edit p {
+  color: var(--text-on-action);
+}
+
+a.edit div {
   width: 26px;
-  aspect-ratio: 1;
+  height: 26px;
+  padding: 0;
   margin-left: 10px;
+  mask-image: url('/assets/icons/edit.svg');
+  background-color: var(--text-on-action);
 }
 
 .settings img {
@@ -269,7 +277,7 @@ a.edit img {
   margin-left: 10px;
 }
 
-.approval-wrapper img {
+.approval-wrapper .svg {
   width: 36px;
   aspect-ratio: 1;
   margin-left: 10px;
@@ -291,8 +299,8 @@ a.edit img {
   display: flex;
 }
 
-.thumbs-up-wrapper img,
-.thumbs-down-wrapper img {
+.thumbs-up-wrapper div,
+.thumbs-down-wrapper div {
   display: none;
 }
 
@@ -334,7 +342,7 @@ a.edit img {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: #C29A62;
+  background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -352,12 +360,42 @@ a.edit img {
   width: 150px;
   height: 20px;
   border-radius: 50px;
-  border: 3px solid black;
+  border: 3px solid var(--border);
 }
 
 .progress-bar-fill {
-  background-color: black;
+  background-color: var(--border);
   height: 100%;
   width: 0;
   border-radius: inherit;
+}
+
+.approval-wrapper .svg {}
+
+.svg.thumbs-up.fill {
+  mask-image: url("/assets/icons/thumbs-up-fill.svg");
+}
+
+.svg.thumbs-up.nofill {
+  mask-image: url("/assets/icons/thumbs-up.svg");
+}
+
+.svg.thumbs-down.fill {
+  mask-image: url("/assets/icons/thumbs-down-fill.svg");
+}
+
+.svg.thumbs-down.nofill {
+  mask-image: url("/assets/icons/thumbs-down.svg");
+}
+
+.svg.settings {
+  mask-image: url("/assets/icons/settings.svg");
+}
+
+.svg.maximize {
+  mask-image: url("/assets/icons/maximize.svg");
+}
+
+.svg.minimize {
+  mask-image: url("/assets/icons/minimize.svg");
 }

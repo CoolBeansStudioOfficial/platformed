@@ -1,5 +1,65 @@
+:root {
+  --bg-primary: #f1e8d4;
+  --bg-accent: #f1e8d4;
+  --bg-level: #cae3f6;
+
+  --action: black;
+
+  --border: black;
+
+  --text-on-primary: black;
+  --text-on-accent: black;
+  --text-on-action: #f1e8d4;
+}
+
+[data-theme="cream"] {
+  --bg-primary: #f1e8d4;
+  --bg-accent: #cbc3b0;
+  --bg-level: #cae3f6;
+
+  --action: black;
+
+  --border: black;
+
+  --text-on-primary: black;
+  --text-on-accent: black;
+  --text-on-action: #f1e8d4;
+}
+
+[data-theme="blue"] {
+  --bg-primary: #a8b7d3;
+  --bg-accent: #94a1c3;
+  --bg-level: #a3c9e5;
+
+  --action: black;
+
+  --border: black;
+
+  --text-on-primary: black;
+  --text-on-accent: black;
+  --text-on-action: #a8b7d3;
+}
+
+[data-theme="coffee"] {
+  --bg-primary: #2f271b;
+  --bg-accent: #765d41;
+  --bg-level: #765d41;
+
+  --action: #dad0b0;
+
+  --border: #dad0b0;
+
+  --text-on-primary: #dad0b0;
+  --text-on-accent: #dad0b0;
+  --text-on-action: #2f271b;
+}
+
+* {
+  color: var(--text-on-primary);
+}
+
 body {
-  background-color: #c29a62;
+  background-color: var(--bg-primary);
   font-family: "Fredoka", sans-serif;
   font-weight: 500;
   margin: 0;
@@ -51,8 +111,8 @@ nav h1 {
 
 .login input {
   margin: 7px;
-  background-color: #c29a62;
-  border: 3px solid black;
+  background-color: var(--bg-primary);
+  border: 3px solid var(--border);
   border-radius: 17px;
   width: min(400px, 95vw);
   height: 25px;
@@ -63,18 +123,18 @@ nav h1 {
 }
 
 .login input:-webkit-autofill {
-  background-color: #c29a62 !important;
+  background-color: var(--bg-primary) !important;
 }
 
 .login input[type="submit"] {
   width: 100px;
-  background-color: black;
-  color: #c29a62;
+  background-color: var(--action);
+  color: var(--text-on-action);
   font-family: "Fredoka", sans-serif;
   font-size: 20px;
   height: 33px;
   border: none;
-  -webkit-text-fill-color: #c29a62;
+  -webkit-text-fill-color: var(--bg-primary);
   /* styles the placeholder */
   font-size: 20px;
 }
@@ -87,7 +147,7 @@ nav h1 {
 }
 
 .form-bottom a {
-  color: black;
+  color: var(--action);
   margin-right: 7px;
 }
 
@@ -108,7 +168,35 @@ label.error-text:empty {
 
 .title {
   font-size: 35px;
-  font-weight: 500  ;
-  color: black;
+  font-weight: 500;
+  color: var(--text-on-primary);
+  text-decoration: none;
+}
+
+.oauth {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.hack-club-oauth {
+  border: 3px solid var(--border);
+  height: 25px;
+  padding: 1px 10px;
+  border-radius: 50px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  margin: 7px;
+  cursor: pointer;
+  color: var(--text-on-primary);
+  text-decoration: none;
+}
+
+.hack-club-oauth div {
+  font-size: 20px;
+  color: var(--text-on-primary);
   text-decoration: none;
 }

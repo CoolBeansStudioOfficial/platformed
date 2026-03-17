@@ -25,19 +25,21 @@ function isStrip(img) {
   }
 }
 
-function getMechanics(idx) {
-  const tiles = mode == "play" ? player.tiles : editor.map.tiles
-  let outList = []
-  if (idx >= 0 && idx < (editor.width * editor.height)) {
-    const tilesetItem = editor.tileset[tiles[idx] >> 4]
-    if (tilesetItem.id == 0 || !tilesetItem.mechanics) return outList
-    outList = [...tilesetItem.mechanics]
-    return outList
-  } else {
-    return outList
-  }
+export function mechanicsHas(tileId, mechanic) {
+  return editor.tileset[tileId] && editor.tileset[tileId].mechanics && editor.tileset[tileId].mechanics.includes(mechanic)
 }
 
+export function typeIs(tileId, type) {
+  return editor.tileset[tileId] && editor.tileset[tileId].type == type
+}
+
+export function triggersAdjacency(tileId) {
+  return editor.tileset[tileId] && editor.tileset[tileId].triggerAdjacency
+}
+
+/**
+ * Calculates adjacencies for the whole level
+ */
 export function calculateAdjacencies(tiles, w, h, tileset = editor.tileset) {
   let out = []
   // calculate all the adjacencies in a given level
@@ -53,6 +55,9 @@ export function calculateAdjacencies(tiles, w, h, tileset = editor.tileset) {
   return out
 }
 
+/**
+ * Calculates an adjacency for a specific tile
+ */
 export function calculateAdjacency(tileIdx, tileId, tiles = editor.map.tiles, tileset = editor.tileset, w = editor.width, h = editor.height) {
   // calculate the adjacency for a given tile 
   let variant = 0
@@ -104,12 +109,30 @@ export function calculateAdjacency(tileIdx, tileId, tiles = editor.map.tiles, ti
 
 }
 
+/**
+ * Calculates the adjacency and 4 surrounding adjacencies for a tile
+ * @param {number} idx - The index of the tile
+ * @param {number} tile - The tileId of the tile
+ * @param {Uint16Array} tiles - what tileset to use
+ * @returns The raw center tile
+ */
 export function calcAdjacentAdjacency(idx, tile = editor.selectedTile, tiles = editor.map.tiles) {
-  if (editor.tileset[tile] && !(editor.tileset[tile].triggerAdjacency)) {
+  let beforeRotation = 0
+  const tileId = tiles[idx] >> 4
+  if (typeIs(tileId, "rotation")) {
+    beforeRotation = tiles[idx] & 3
+  }
+  if (triggersAdjacency(tile)) {
     tiles[idx] = tile << 4
   }
   const centerVal = calculateAdjacency(idx, tile, tiles)
-  tiles[idx] = centerVal
+
+  if (typeIs(tileId, "rotation")) {
+    tiles[idx] = (centerVal >> 2 << 2) + beforeRotation
+  } else {
+    tiles[idx] = centerVal
+  }
+
   const w = editor.width
   const neighbors = []
   if (idx - w >= 0) neighbors.push(idx - w)
@@ -119,7 +142,7 @@ export function calcAdjacentAdjacency(idx, tile = editor.selectedTile, tiles = e
 
   neighbors.forEach(n => {
     const tileId = tiles[n] >> 4
-    if (tileId !== 0 && editor.tileset[tileId].type == 'adjacency') {
+    if (tileId !== 0 && typeIs(tileId, 'adjacency')) {
       tiles[n] = calculateAdjacency(n, tileId, tiles)
     }
   })
@@ -127,6 +150,13 @@ export function calcAdjacentAdjacency(idx, tile = editor.selectedTile, tiles = e
   return centerVal
 }
 
+/**
+ * 
+ * @param {number} heightInTiles - how high the jump should be
+ * @param {number} yInertia - the yIntertia value
+ * @param {number} tileSize - the tileSize in pixels
+ * @returns the jump height value needed for that jump height
+ */
 function getJumpHeight(heightInTiles, yInertia, tileSize) {
   const gravity = ((0.7 * yInertia) + 0.5) * (tileSize / 64)
   const heightInPixels = heightInTiles * tileSize
@@ -155,7 +185,7 @@ function scanLevelOnPlay() {
   for (let i = 0; i < tiles.length; i++) {
     const raw = tiles[i]
     const tileId = raw >> 4
-    if (tileId != 0 && editor.tileset[tileId] && editor.tileset[tileId].type == "enemy") {
+    if (tileId != 0 && typeIs(tileId, "enemy")) {
       const ty = Math.floor(i / editor.map.w)
       const tx = i % editor.map.w
       const worldY = ty * player.tileSize
@@ -195,9 +225,9 @@ export function initPlatformer() {
   player.toggledTile = true
   player.lastCheckpointSpawn = { x: 0, y: 0 }
   player.collectedCoinList = []
+  player.triggerTimeouts = []
   updatePhysicsConstants()
   scanLevelOnPlay()
-  console.log(player.x, player.y)
 }
 
 export function killPlayer() {
@@ -237,7 +267,6 @@ function checkPixelCollsion(tile, tx, ty, px, py, pw, ph) {
       } else {
         img = tile.images[0]
       }
-      console.log(img, img.width, img.height)
     } else {
       img = tile.image
     }
@@ -283,41 +312,146 @@ function checkPixelCollsion(tile, tx, ty, px, py, pw, ph) {
   return false
 }
 
+function fillSelection(startX, startY, endX, endY, tileId) {
+  for (let y = startY; y <= endY; y++) {
+    for (let x = startX; x <= endX; x++) {
+      const idx = y * editor.width + x
+      calcAdjacentAdjacency(idx, tileId, player.tiles)
+    }
+  }
+}
+
 function handleTriggers(tx, ty) {
   const trigger = player.triggers.find(f => f.x == tx && f.y == ty)
   if (!trigger) return
   player.standingOnTrigger = true
 
-  for (const step of trigger.execute) {
-    if (step.type == "toggleBlocks") {
-      player.toggledTile = !player.toggledTile
-    }
-    if (step.type == "teleport") {
-      if (!step.x || !step.y) continue
-      teleportPlayer(step.x, step.y)
-    }
-    if (step.type == "rotate") {
-      console.log(step)
-      if (!step.x || !step.y || !step.beforeRotation) return
-      rotateTile(step.x, step.y, step.beforeRotation)
-    }
-    if (step.type == "updateBlock") {
-      if (step.x == undefined || step.y == undefined || step.block == undefined) return
-      console.log(step)
-      const idx = step.y * editor.width + step.x
-      calcAdjacentAdjacency(idx, step.block, player.tiles)
+  const executeTriggerSteps = (trigger, startIndex = 0) => {
+    for (let i = startIndex; i < trigger.execute.length; i++) {
+      const step = trigger.execute[i]
+      if (!step) return
+      if (step.type == "toggleBlocks") {
+        player.toggledTile = !player.toggledTile
+        continue
+      }
+      if (step.type == "teleport") {
+        if (step.x == undefined || step.y == undefined) continue
+        teleportPlayer(step.x, step.y, step.instant || false)
+        continue
+      }
+      if (step.type == "rotate") {
+        if (!step.x || !step.y || !step.beforeRotation) return
+
+        rotateTile(step.x, step.y, step.beforeRotation)
+
+        continue
+      }
+      if (step.type == "change") {
+        if (step.x == undefined || step.y == undefined) return
+        if (step.block !== undefined) {
+          const idx = step.y * editor.width + step.x
+          calcAdjacentAdjacency(idx, step.block, player.tiles)
+          player.tiles[idx] = step.block << 4
+        }
+        if (step.rotate !== undefined) {
+          rotateTile(step.x, step.y, step.rotate)
+        }
+        if (step.rotation !== undefined) {
+          rotateTile(step.x, step.y, step.rotate)
+        }
+      }
+      if (step.type == 'if') {
+        if (step.condition === undefined) return
+        const cond = step.condition
+        let isTrue = false
+
+        if (cond.subject === "BLOCK") {
+          const idx = cond.y * editor.map.w + cond.x
+          if (cond.operator === "IS") {
+
+            if (cond.property === "TYPE") {
+              isTrue = typeIs(player.tiles[idx] >> 4, cond.value)
+            }
+            if (cond.property === "TILEID") {
+              isTrue = player.tiles[idx] >> 4 === cond.value
+            }
+            if (cond.property === "ROTATION") {
+              isTrue = player.tiles[idx] & 3 === cond.value
+            }
+          }
+        }
+        if (!isTrue) {
+          // skip to the end or the else statement
+          for (let x = i; x < trigger.execute.length; x++) {
+            if (trigger.execute[x].type === "else" || trigger.execute[x].type === "end") {
+              executeTriggerSteps(trigger, x)
+              return
+            }
+          }
+        } else {
+          player.skipElse = true
+        }
+      }
+      if (step.type == "else") {
+        if (player.skipElse) {
+          // if condition was true, skip this one
+          for (let x = i; x < trigger.execute.length; x++) {
+            if (trigger.execute[x].type === "end") {
+              executeTriggerSteps(trigger, x)
+              return
+            }
+          }
+        }
+      }
+      if (step.type == "fill") {
+        if (step.startX === undefined || step.startY === undefined || step.endX === undefined || step.endY === undefined || step.block === undefined) return
+        const minX = Math.min(step.startX, step.endX)
+        const maxX = Math.max(step.startX, step.endX)
+        const minY = Math.min(step.startY, step.endY)
+        const maxY = Math.max(step.startY, step.endY)
+
+        fillSelection(minX, minY, maxX, maxY, step.block)
+      }
+      if (step.type == "end") {
+        player.skipElse = false
+      }
+      if (step.type == "updateBlock") {
+        if (step.x == undefined || step.y == undefined || step.block == undefined) return
+        const idx = step.y * editor.width + step.x
+        calcAdjacentAdjacency(idx, step.block, player.tiles)
+        player.tiles[idx] = step.block << 4
+        continue
+      }
+      if (step.type == "delay") {
+        if (step.time === undefined) continue
+        const ms = step.time
+
+        const tid = setTimeout(() => {
+          const index = player.triggerTimeouts.indexOf(tid)
+          if (index !== -1) player.triggerTimeouts.splice(index, 1)
+          executeTriggerSteps(trigger, i + 1)
+        }, ms)
+        player.triggerTimeouts.push(tid)
+        return
+      }
     }
   }
+  executeTriggerSteps(trigger, 0)
 }
 
-function teleportPlayer(tx, ty) {
-  player.vy = 0
-  player.vx = 0
-  player.died = true
-  player.dieCameraTimer = player.dieCameraTime
-  player.dieCameraStart = { x: player.cam.x, y: player.cam.y }
-  player.x = tx * player.tileSize
-  player.y = ty * player.tileSize
+function teleportPlayer(tx, ty, instant) {
+  if (instant) {
+    player.x = tx * player.tileSize
+    player.y = ty * player.tileSize
+  } else {
+    player.vy = 0
+    player.vx = 0
+    player.died = true
+    player.dieCameraTimer = player.dieCameraTime
+    player.dieCameraStart = { x: player.cam.x, y: player.cam.y }
+    player.x = tx * player.tileSize
+    player.y = ty * player.tileSize
+  }
 }
 
 function rotateTile(tx, ty, amount) {
@@ -325,7 +459,7 @@ function rotateTile(tx, ty, amount) {
   const raw = player.tiles[idx]
   const rotation = raw & 3
   const newRotation = (rotation + amount) % 4
-  if (editor.tileset[raw >> 4].type == "rotation") {
+  if (typeIs(raw >> 4, "rotation")) {
     player.tiles[idx] = (raw >> 4 << 4) + newRotation
   }
 }
@@ -415,31 +549,31 @@ function checkCollision(dt, x, y, w, h, simulate = false) {
       if (player.x !== oldX || player.y !== oldY) return false
       if (tileId !== 0) {
         const tile = editor.tileset[tileId]
-        if (tile && tile.mechanics && tile.mechanics.includes("trigger")) {
+        if (mechanicsHas(tileId, "trigger")) {
           touchingTrigger = true
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("killOnTouch")) {
+        if (mechanicsHas(tileId, "killOnTouch")) {
           continue
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("hidden")) {
+        if (mechanicsHas(tileId, "hidden")) {
           continue
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("bouncePad")) {
+        if (mechanicsHas(tileId, "bouncePad")) {
           continue
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("noCollision")) {
+        if (mechanicsHas(tileId, "noCollision")) {
           continue
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("pixelCollision")) {
+        if (mechanicsHas(tileId, "pixelCollision")) {
           return checkPixelCollsion(tiles[idx], px, py, x, y, w, h)
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("swapTrigger1") && player.toggledTile) {
+        if (mechanicsHas(tileId, "swapTrigger1") && player.toggledTile) {
           continue
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("swapTrigger2") && !player.toggledTile) {
+        if (mechanicsHas(tileId, "swapTrigger2") && !player.toggledTile) {
           continue
         }
-        if (tile && tile.mechanics && tile.mechanics.includes("dissipate")) {
+        if (mechanicsHas(tileId, "dissipate")) {
           const dissipation = player.dissipations.find(d => d.tileIdx === idx)
           if (dissipation && dissipation.timer <= dissipation.timeToDissipate && dissipation.timer > 0) {
             continue
@@ -534,12 +668,14 @@ function updatePhysics(dt) {
       player.vx -= scaledXInertia * 0.45 * dt
       if (player.vx < 0) player.vx = 0
     }
+    if (Math.abs(player.vx) < player.stopThreshold) {
+      player.vx = 0
+    }
   }
 
   const inputDir = Math.sign(targetVx)
-  const velDir = Math.sign(player.vx)
 
-  if (Math.abs(player.vx) < Math.abs(targetVx)) {
+  if (Math.abs(player.vx) < Math.abs(targetVx) || Math.abs(player.vx) === Math.abs(targetVx)) {
     player.vx += inputDir * scaledXInertia * currentControl * dt
   } else {
     slowDown()
@@ -716,6 +852,7 @@ function updateEnemyPhysics(dt) {
 }
 
 export function platformerLoop(dt) {
+  const { colorTheme } = editor
   pollGamepad()
   let timeScale = dt * 60
 
@@ -739,7 +876,7 @@ export function platformerLoop(dt) {
       const ease = -(Math.cos(Math.PI * progress) - 1) / 2
       const mapW = editor.map.w * player.tileSize
       const mapH = editor.map.h * player.tileSize
-
+      '#C29A62'
       let targetX = getCameraCoords().x
       let targetY = getCameraCoords().y
 
@@ -764,7 +901,8 @@ export function platformerLoop(dt) {
   }
 
 
-  ctx.fillStyle = '#C29A62'
+
+  ctx.fillStyle = colorTheme.bgLevel
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
   drawMap(player.tileSize, player.cam)

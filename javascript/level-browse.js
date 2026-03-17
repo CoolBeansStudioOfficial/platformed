@@ -2,9 +2,61 @@ const serverUrl = window.location.origin
 async function getLevel(page = 1) {
   try {
     const levels = await fetch(`${serverUrl}/api/browse`)
-    return levels.json()
+    const data = await levels.json()
+    updatePageHTML(data.pages)
+    return data.levels
   } catch (e) {
     console.error(e)
+  }
+}
+
+function updatePageHTML(pages, currentPage = 1) {
+  const pageWrapper = document.querySelector(".pages")
+  pageWrapper.innerHTML = '<p>Page</p>'
+
+  // always add the first page
+  const firstPage = document.createElement("button")
+  firstPage.innerText = "1"
+  firstPage.classList.add("page")
+  if (currentPage == 1) {
+    firstPage.classList.add("selected")
+  }
+  firstPage.addEventListener("click", async () => {
+    // switch to first page
+    for (const button of document.querySelectorAll(".pages .page")) {
+      button.classList.remove("selected")
+    }
+    const raw = await fetch(`${serverUrl}/api/browse?page=1`)
+    const json = await raw.json()
+    const levels = await json.levels
+    addLevels(levels)
+    updatePageHTML(json.pages, 1)
+  })
+  pageWrapper.appendChild(firstPage)
+
+  let start = Math.sign(currentPage - 2) === 1 && currentPage - 2 !== 1 ? currentPage - 2 : 2
+  console.log(start)
+  for (let i = start; i < start + 5; i++) {
+    if (i >= pages) continue
+    console.log(i)
+    const page = document.createElement("button")
+    page.innerText = i
+    page.classList.add("page")
+    if (currentPage === i) {
+      page.classList.add("selected")
+    }
+    page.addEventListener("click", async () => {
+      for (const button of document.querySelectorAll(".pages .page")) {
+        button.classList.remove("selected")
+      }
+      const data = await fetch(`${serverUrl}/api/browse?page=${i}`)
+      const json = await data.json()
+      const levels = json.levels
+      addLevels(levels)
+      console.log(page)
+      updatePageHTML(json.pages, i)
+    })
+    pageWrapper.appendChild(page)
   }
 }
 
@@ -31,7 +83,7 @@ async function addLevels(levels) {
         <h2 class="name">${level.name}</h2>
         <div class="approval-rating-wrapper">
           <p class="approval-rating">${Math.floor(level.approval_percentage)}%</p>
-          <img src="./assets/icons/thumbs-${ratingImg}.svg" alt="">
+          <div class="svg ${level.approval_percentage > 50 ? "thumbs-up" : "thumbs-down"}"></div>
         </div>
       </div>
       <div class="tags-and-plays">
@@ -78,7 +130,9 @@ const sortBy = document.getElementById("sort-by")
 
 sortBy.addEventListener("input", async (e) => {
   const raw = await fetch(`${serverUrl}/api/browse?sortBy=${encodeURIComponent(sortBy.value)}`)
-  const levels = await raw.json()
+  const data = await raw.json()
+  console.log(data)
+  const levels = data.levels
   addLevels(levels)
 })
 
@@ -93,6 +147,24 @@ fetch(`${serverUrl}/api/me`)
     myLevelsbutton.innerText = "Sign In"
     myLevelsbutton.href = `/login?redirect=${encodeURIComponent('/')}`
   })
+
+function getThemeColor(colorName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(colorName).trim()
+}
+
+const colorTheme = {}
+
+function updateColorTheme() {
+  colorTheme.bgPrimary = getThemeColor('--bg-primary')
+  colorTheme.bgAccent = getThemeColor('--bg-accent')
+  colorTheme.bgLevel = getThemeColor('--bg-level')
+  colorTheme.textOnPrimary = getThemeColor('--text-on-primary')
+  colorTheme.textOnAccent = getThemeColor('--text-on-accent')
+  colorTheme.action = getThemeColor('--action')
+  colorTheme.textOnAction = getThemeColor('--text-on-action')
+}
+
+updateColorTheme()
 
 function decodeRLE(data) {
   const out = []
@@ -180,44 +252,51 @@ const tilesetMap = new Map()
 const imgMap = new Map()
 
 async function loadTileset(tilesetPath) {
+  console.log(tilesetPath)
   if (tilesetMap.has(tilesetPath)) return tilesetMap.get(tilesetPath)
-  const res = await fetch(tilesetPath)
-  const rawJson = await res.json()
-  const tilesetJson = rawJson.tiles
-  const tileset = {}
-  const path = rawJson.path
 
-  const promises = tilesetJson.map(async (def) => {
-    const img = new Image()
-    img.src = path + def.file
-    await new Promise(resolve => {
-      img.onload = resolve
-      img.onerror = resolve
-    })
+  const fetchPromise = (async () => {
 
-    tileset[def.id] = { ...def, triggerAdjacency: def.triggerAdjacency, image: img, images: [] }
+    const res = await fetch(tilesetPath)
+    const rawJson = await res.json()
+    const tilesetJson = rawJson.tiles
+    const tileset = {}
+    const path = rawJson.path
 
-    if (def.type == "adjacency" || def.type == "rotation") {
-      const w = img.naturalHeight
-      if (w > 0) {
-        const count = Math.floor(img.naturalWidth / w)
-        for (let i = 0; i < count; i++) {
-          const canvas = document.createElement('canvas')
-          canvas.width = w
-          canvas.height = w
-          const ctx = canvas.getContext('2d')
-          ctx.drawImage(img, i * w, 0, w, w, 0, 0, w, w)
+    const promises = tilesetJson.map(async (def) => {
+      const img = new Image()
+      img.src = path + def.file
+      await new Promise(resolve => {
+        img.onload = resolve
+        img.onerror = resolve
+      })
 
-          const sliceImg = new Image()
-          sliceImg.src = canvas.toDataURL()
-          tileset[def.id].images[i] = sliceImg
+      tileset[def.id] = { ...def, triggerAdjacency: def.triggerAdjacency, image: img, images: [] }
+
+      if (def.type == "adjacency" || def.type == "rotation") {
+        const w = img.naturalHeight
+        if (w > 0) {
+          const count = Math.floor(img.naturalWidth / w)
+          for (let i = 0; i < count; i++) {
+            const canvas = document.createElement('canvas')
+            canvas.width = w
+            canvas.height = w
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, i * w, 0, w, w, 0, 0, w, w)
+
+            const sliceImg = new Image()
+            sliceImg.src = canvas.toDataURL()
+            tileset[def.id].images[i] = sliceImg
+          }
         }
       }
-    }
-  })
-  await Promise.all(promises)
-  tilesetMap.set(tilesetPath, tileset)
-  return tileset
+    })
+    await Promise.all(promises)
+    return tileset
+  })();
+  tilesetMap.set(tilesetPath, fetchPromise)
+  console.log(tilesetMap.has(tilesetPath))
+  return fetchPromise
 }
 
 export async function renderLevelPreview(canvas, levelData) {
@@ -231,7 +310,7 @@ export async function renderLevelPreview(canvas, levelData) {
 
   ctx.imageSmoothingEnabled = false;
 
-  ctx.fillStyle = "#C29A62"
+  ctx.fillStyle = colorTheme.bgLevel
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
   if (imgMap.has(levelData.id)) {

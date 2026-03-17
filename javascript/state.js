@@ -2,6 +2,50 @@ export const state = {
   user: {
     id: null
   },
+  colorSchemes: [
+    {
+      name: "Cream",
+      id: "cream",
+      colors: {
+        bgPrimary: '#f1e8d4',
+        bgAccent: '#cbc3b0',
+        bgLevel: '#cae3f6',
+        action: 'black',
+        border: 'black',
+        textOnPrimary: 'black',
+        textOnAccent: 'black',
+        textOnAction: '#f1e8d4'
+      }
+    },
+    {
+      name: "Blue",
+      id: "blue",
+      colors: {
+        bgPrimary: '#a8b7d3',
+        bgAccent: '#94a1c5',
+        bgLevel: '#a3c9e5',
+        action: 'black',
+        border: 'black',
+        textOnPrimary: 'black',
+        textOnAccent: 'black',
+        textOnAction: '#a8b7d3'
+      }
+    },
+    {
+      name: "Coffee",
+      id: "coffee",
+      colors: {
+        bgPrimary: '#2F271B',
+        bgAccent: '#765D41',
+        bgLevel: '#765D41',
+        action: '#DAD0B0',
+        border: '#DAD0B0',
+        textOnPrimary: '#DAD0B0',
+        textOnAccent: '#DAD0B0',
+        textOnAction: '#2A2722'
+      }
+    }
+  ],
   player: {
     triggers: [],
     standingOnTrigger: false,
@@ -28,7 +72,7 @@ export const state = {
     grounded: false,
     coyoteTime: 5,
     coyoteTimer: 0,
-    wallCoyoteTime: 10,
+    wallCoyoteTime: 1,
     wallCoyoteTimer: 0,
     lastWallSide: 0,
     jumpBuffer: 10,
@@ -45,8 +89,19 @@ export const state = {
     controlMultiplier: 1,
     hasKeyboard: true,
     dissipations: [],
+    triggerTimeouts: []
   },
   editor: {
+    colorTheme: {
+      bgPrimary: '#E6D6B2',
+      bgAccent: '#E6D6B2',
+      bgLevel: '#CAD9E5',
+      action: 'black',
+      textOnPrimary: 'black',
+      textOnAccent: 'black',
+      textOnAction: '#E6d6b2'
+    },
+    showTriggerHighlights: true,
     cam: {
       x: 0,
       y: 0
@@ -69,7 +124,7 @@ export const state = {
     height: 50,
     tileset: [],
     limitedPlacedTiles: [],
-    tilesetPath: "/assets/medium.json",
+    tilesetPath: "/assets/medium-spritesheet.json",
     dissipateTime: 2 * 60,
     dissipateDelay: 2 * 60,
     history: [],
@@ -86,6 +141,6 @@ export const state = {
       isDragging: false,
       hasFloatingTiles: false,
       triggers: []
-    }
+    },
   },
 };

@@ -15,7 +15,7 @@
 
 .right-nav>* {
     margin-right: 15px;
-    color: black;
+    color: var(--text-on-primary);
     text-decoration: none;
 }
 
@@ -47,16 +47,16 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
+    max-width: 95vw;
 }
 
 .searchbar {
-    border: 3px solid black;
+    border: 3px solid var(--border);
     border-radius: 15px;
     width: 300px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    flex-wrap: none;
 }
 
 .searchbar input {
@@ -65,7 +65,7 @@
     border: none;
     outline: none;
     padding: 5px 10px 5px 15px;
-    -webkit-text-fill-color: black;
+    -webkit-text-fill-color: var(--text-on-primary);
     font-size: 20px;
 }
 
@@ -80,11 +80,11 @@
 
 #sort-by {
     outline: none;
-    border: 3px solid black;
+    border: 3px solid var(--border);
     font-size: 20px;
     border-radius: 15px;
     padding: 5px 10px 5px 15px;
-    background-color: #C29A62;
+    background-color: var(--bg-primary);
     margin-left: 20px;
 }
 
@@ -102,13 +102,32 @@
     flex-direction: column;
     justify-content: center;
     padding: 10px;
-    border: 3px solid black;
+    border: 3px solid var(--border);
     border-radius: 15px;
-    width: 400px;
+    width: min(400px, 90vw);
     margin: 20px;
-    color: black !important;
+    color: var(--text-on-primary) !important;
     text-decoration: none !important;
     transition: transform 200ms ease;
+}
+
+.searchbar .search.svg {
+    mask-image: url("/assets/icons/search.svg");
+    width: 35px;
+    height: 35px;
+    margin-right: 10px;
+}
+
+.level .approval-rating-wrapper .thumbs-down {
+    mask-image: url("/assets/icons/thumbs-down-fill.svg");
+    width: 25px;
+    height: 25px;
+}
+
+.level .approval-rating-wrapper .thumbs-up {
+    width: 25px;
+    height: 25px;
+    mask-image: url("/assets/icons/thumbs-up.svg")
 }
 
 .level:hover {
@@ -117,7 +136,7 @@
 }
 
 .image {
-    border: 3px solid black;
+    border: 3px solid var(--border);
     border-radius: 7px;
     box-sizing: border-box;
     aspect-ratio: 5 / 3;
@@ -172,7 +191,7 @@
     height: 100%;
     top: 0;
     left: 0;
-    background: linear-gradient(to right, transparent 95%, #C29A62 100%)
+    background: linear-gradient(to right, transparent 95%, var(--bg-primary) 100%)
 }
 
 .name.my-levels {
@@ -244,7 +263,7 @@
 }
 
 .quick-actions a {
-    color: black;
+    color: var(--border);
     text-decoration: none;
 }
 
@@ -267,8 +286,8 @@
 }
 
 .overlay .confirm-delete {
-    background-color: #C29A62;
-    border: 3px solid black;
+    background-color: var(--bg-primary);
+    border: 3px solid var(--border);
     border-radius: 20px;
     padding: 10px 20px;
 }
@@ -288,12 +307,12 @@
 .overlay .option {
     border-radius: 10px;
     margin: 0 20px 10px 20px;
-    border: 3px solid black;
+    border: 3px solid var(--border);
 }
 
 .overlay #confirm-button {
-    color: #C29A62;
-    background-color: black;
+    color: var(--text-on-action);
+    background-color: var(--action);
 }
 
 .overlay #cancel-button p,
@@ -311,6 +330,45 @@
 .divider {
     width: 0;
     height: 30px;
-    border-left: 3px solid black;
+    border-left: 3px solid var(--border);
     border-radius: 13px;
+}
+
+.pages {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-content: center;
+    gap: 20px;
+    margin: 20px auto;
+}
+
+.pages p {
+    font-size: 20px;
+}
+
+.pages .page {
+    background-color: var(--bg-primary);
+    color: var(--text-on-primary);
+    border: 3px solid var(--border);
+}
+
+.pages .page.selected {
+    border: 3px solid var(--border);
+    background-color: var(--action);
+    color: var(--text-on-action);
+}
+
+@media (max-height: 500px) {
+    .grid {
+        grid-template-rows: 50px 1fr;
+    }
+
+    .topbar {
+        height: 50px;
+    }
+
+    .level {
+        width: min(300px, 40vw);
+    }
 }
