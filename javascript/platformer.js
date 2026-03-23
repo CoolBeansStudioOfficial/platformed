@@ -1,5 +1,5 @@
 import { toggleEditorUI, sortByCategory, needsSmallerLevel, pollGamepad } from "./ui.js"
-import { canvas, ctx, drawEnemies, drawMap, drawPlayer, getCameraCoords } from "./renderer.js"
+import { canvas, ctx, drawEnemies, drawMap, drawMovingTiles, drawPlayer, getCameraCoords } from "./renderer.js"
 import { endLevel, key, playSound, input, mode } from "./site.js"
 import { state } from "./state.js"
 import { createMap } from "./file-utils.js"
@@ -159,8 +159,12 @@ export function calcAdjacentAdjacency(idx, tile = editor.selectedTile, tiles = e
  */
 function getJumpHeight(heightInTiles, yInertia, tileSize) {
   const gravity = ((0.7 * yInertia) + 0.5) * (tileSize / 64)
-  const heightInPixels = heightInTiles * tileSize
-  return Math.sqrt(2 * gravity * heightInPixels)
+  const maxHeightInPixels = heightInTiles * tileSize
+  const minHeightInPixels = (heightInTiles * 0.3) * tileSize
+  return {
+    max: Math.sqrt(2 * gravity * maxHeightInPixels),
+    min: Math.sqrt(2 * gravity * minHeightInPixels)
+  }
 }
 
 function getJumpSpeed(jumpLengthInTiles, jumpForce, yInertia, tilesize) {
@@ -200,13 +204,34 @@ function scanLevelOnPlay() {
         direction: 1
       }
       enemies.push(enemy)
+    } else if (tileId !== 0 && mechanicsHas(tileId, "movingBlock")) {
+      const ty = Math.floor(i / editor.map.w)
+      const tx = i % editor.map.w
+      const worldY = ty * player.tileSize
+      const worldX = tx * player.tileSize
+      player.tiles[i] = 0
+      player.movingBlocks.push({
+        image: editor.tileset[tileId]?.images[raw & 15],
+        x: worldX,
+        y: worldY,
+        w: player.tileSize,
+        h: player.tileSize,
+        vx: 2,
+        vy: 0,
+        startX: worldX,
+        startY: worldY,
+        direction: 1
+      })
     }
   }
+  console.log(player.movingBlocks)
 }
 
 export function updatePhysicsConstants() {
   const ratio = player.tileSize / 64
-  player.jump = getJumpHeight(player.jumpHeight + 0.3, player.yInertia, player.tileSize)
+  const jumpInfo = getJumpHeight(player.jumpHeight + 0.3, player.yInertia, player.tileSize)
+  player.jump = jumpInfo.max
+  player.minJump = jumpInfo.min
   player.speed = getJumpSpeed(player.jumpWidth - 1, player.jump, player.yInertia, player.tileSize)
   player.x = editor.playerSpawn.x * player.tileSize
   player.y = editor.playerSpawn.y * player.tileSize
@@ -222,6 +247,7 @@ export function updatePhysicsConstants() {
 export function initPlatformer() {
   toggleEditorUI(false)
   player.tiles = new Uint16Array(editor.map.tiles)
+  player.movingBlocks = []
   player.toggledTile = true
   player.lastCheckpointSpawn = { x: 0, y: 0 }
   player.collectedCoinList = []
@@ -465,7 +491,7 @@ function rotateTile(tx, ty, amount) {
 }
 function mechanics(dt, tileIdx, tileId, tx, ty, x, y, w, h) {
   const tiles = mode == "play" ? player.tiles : editor.map.tiles
-  const mechanics = editor.tileset[tileId].mechanics
+  const mechanics = editor.tileset[tileId]?.mechanics
   if (!mechanics) return
   if (mechanics.includes("killOnTouch")) {
     if (checkPixelCollsion(tiles[tileIdx], tx, ty, x, y, w, h)) {
@@ -480,13 +506,13 @@ function mechanics(dt, tileIdx, tileId, tx, ty, x, y, w, h) {
       const idx = ty * editor.map.w + tx
       const bounceTile = tiles[idx]
       if ((bounceTile & 15) == 0) {
-        player.vy = -getJumpHeight(player.bouncePadHeight, player.yInertia, player.tileSize)
+        player.vy = -getJumpHeight(player.bouncePadHeight, player.yInertia, player.tileSize).max
       } else if ((bounceTile & 15) == 1) {
-        player.vx = -getJumpHeight(player.bouncePadHeight, player.xInertia, player.tileSize)
+        player.vx = -getJumpHeight(player.bouncePadHeight, player.xInertia, player.tileSize).max
       } else if ((bounceTile & 15) == 2) {
-        player.vy = getJumpHeight(player.bouncePadHeight, player.yInertia, player.tileSize)
+        player.vy = getJumpHeight(player.bouncePadHeight, player.yInertia, player.tileSize).max
       } else if ((bounceTile & 15) == 3) {
-        player.vx = getJumpHeight(player.bouncePadHeight, player.xInertia, player.tileSize)
+        player.vx = getJumpHeight(player.bouncePadHeight, player.xInertia, player.tileSize).max
       }
     }
   }
@@ -548,7 +574,6 @@ function checkCollision(dt, x, y, w, h, simulate = false) {
 
       if (player.x !== oldX || player.y !== oldY) return false
       if (tileId !== 0) {
-        const tile = editor.tileset[tileId]
         if (mechanicsHas(tileId, "trigger")) {
           touchingTrigger = true
         }
@@ -580,11 +605,130 @@ function checkCollision(dt, x, y, w, h, simulate = false) {
           }
         }
         if (player.collectedCoinList.includes(idx)) continue
+        if (!editor.tileset[tileId]) {
+          continue
+        }
         return true
       }
     }
   }
   return false
+}
+
+function getMovingBlockHit(px, py, pw, ph) {
+  let best = null
+
+  for (const block of player.movingBlocks) {
+    if (!aabbIntersect(px, py, pw, ph, block.x, block.y, block.w, block.h)) continue
+
+    const overlapLeft = (px + pw) - block.x
+    const overlapRight = (block.x + block.w) - px
+    const overlapTop = (py + ph) - block.y
+    const overlapBottom = (block.y + block.h) - py
+
+    const penX = Math.min(overlapLeft, overlapRight)
+    const penY = Math.min(overlapTop, overlapBottom)
+
+    const hit = {
+      block,
+      axis: penX < penY ? "x" : "y",
+      penX,
+      penY,
+      nx: (px + pw * 0.5) < (block.x + block.w * 0.5) ? -1 : 1,
+      ny: (py + ph * 0.5) < (block.y + block.h * 0.5) ? -1 : 1
+    }
+
+    if (!best || Math.min(hit.penX, hit.penY) < Math.min(best.penX, best.penY)) {
+      best = hit
+    }
+  }
+
+  return best
+}
+
+
+function updateMovingBlocks(dt) {
+  player.onMovingPlatform = false
+  let alreadyMovedByPlatform = false
+  for (const block of player.movingBlocks) {
+    const dx = block.vx * dt
+    const dy = block.vy * dt
+
+
+    const offX = (player.w - player.hitboxW) / 2
+    const offY = player.h - player.hitboxH
+    const px = player.x + offX
+    const py = player.y + offY
+    const pw = player.hitboxW
+    const ph = player.hitboxH
+
+    const standEps = Math.max(1, Math.abs(dy) + 0.25)
+    const edgeEps = 0.5
+
+    const feet = py + ph
+    const isStandingOn =
+      Math.abs(feet - block.y) <= standEps &&
+      px + pw > block.x + edgeEps &&
+      px < block.x + block.w - edgeEps &&
+      player.vy >= 0
+
+    block.x += dx
+    block.y += dy
+
+    if (isStandingOn) {
+      player.onMovingPlatform = true
+      if (!alreadyMovedByPlatform) {
+        player.x += dx
+        alreadyMovedByPlatform = true
+      }
+
+      player.y = block.y - ph - offY - 0.01
+
+      player.grounded = true
+      player.vy = 0
+      player.coyoteTimer = player.coyoteTime
+    }
+
+    const newPx = player.x + offX
+    const newPy = player.y + offY
+
+    const hit = getMovingBlockHit(newPx, newPy, pw, ph)
+    if (!isStandingOn && hit && hit.block === block) {
+      if (hit.axis === "x") {
+        if (hit.nx < 0) {
+          player.x = block.x - pw - offX - 0.01
+        } else {
+          player.x = block.x + block.w - offX + 0.01
+        }
+        player.vx = hit.block.vx
+      } else {
+        if (hit.ny < 0) {
+          player.y = block.y - ph - offY - 0.01
+          player.vy = hit.block.vy
+          player.grounded = true
+        } else {
+          player.y == block.y + block.h - offY + 0.01
+          if (player.vy < 0) player.vy = 0
+        }
+      }
+
+      const tileHit = checkCollision(dt, player.x + offX, player.y + offY, pw, ph)
+
+      const margin = 2
+      let isSquished = false
+
+      if (hit.axis == "x" && hit.block.vx !== 0) {
+        isSquished = checkCollision(dt, player.x + offX, player.y + offY + margin, pw, ph - (margin * 2), true)
+      } else if (hit.axis === "y" && hit.block.vx !== 0) {
+        isSquished = checkCollision(dt, player.x + offX + margin, player.y + offY, pw - (margin * 2), ph, true)
+      }
+
+      // only kill the player if the they're being squished, not just pushed into a wall by standing on the platform
+      if (isSquished) {
+        killPlayer()
+      }
+    }
+  }
 }
 
 function limitControl(time, multiplier) {
@@ -627,7 +771,13 @@ function updatePhysics(dt) {
   }
 
   const gravity = ((0.7 * player.yInertia) + 0.5) * (player.tileSize / 64)
-  player.vy += gravity * dt
+  if (!player.onMovingPlatform) {
+    player.vy += gravity * dt
+  }
+
+  if (player.vy < -player.minJump && !key("up") && !input.jumpButton) {
+    player.vy = -player.minJump
+  }
 
   if (player.vy > player.tileSize * 0.8) {
     player.vy = player.tileSize * 0.8
@@ -661,15 +811,31 @@ function updatePhysics(dt) {
   }
 
   function slowDown() {
-    if (player.vx < 0) {
-      player.vx += scaledXInertia * 0.45 * dt
-      if (player.vx > 0) player.vx = 0
-    } else if (player.vx > 0) {
-      player.vx -= scaledXInertia * 0.45 * dt
-      if (player.vx < 0) player.vx = 0
-    }
-    if (Math.abs(player.vx) < player.stopThreshold) {
-      player.vx = 0
+    if (player.physicsVersion === 2) {
+      const slidiness = Math.max(player.slidiness, 0.05)
+      const midairSlidiness = Math.max(slidiness - 0.4, 0.2)
+      const outSlidiness = player.grounded ? slidiness : midairSlidiness
+      if (player.vx < 0) {
+        player.vx += scaledXInertia * outSlidiness * dt
+        if (player.vx > 0) player.vx = 0
+      } else if (player.vx > 0) {
+        player.vx -= scaledXInertia * outSlidiness * dt
+        if (player.vx < 0) player.vx = 0
+      }
+      if (Math.abs(player.vx) < player.stopThreshold) {
+        player.vx = 0
+      }
+    } else {
+      if (player.vx < 0) {
+        player.vx += scaledXInertia * 0.45 * dt
+        if (player.vx > 0) player.vx = 0
+      } else if (player.vx > 0) {
+        player.vx -= scaledXInertia * 0.45 * dt
+        if (player.vx < 0) player.vx = 0
+      }
+      if (Math.abs(player.vx) < player.stopThreshold) {
+        player.vx = 0
+      }
     }
   }
 
@@ -686,13 +852,36 @@ function updatePhysics(dt) {
 
   player.x += player.vx * dt
   touchingTrigger = false
-  if (checkCollision(dt, player.x + offX, player.y + offY, player.hitboxW, player.hitboxH)) {
+
+  const blockHitX = getMovingBlockHit(player.x + offX, player.y + offY, player.hitboxW, player.hitboxH)
+
+  if (blockHitX && blockHitX.axis === "x") {
+    if (blockHitX.nx < 0) {
+      player.x = blockHitX.block.x - player.hitboxW - offX - 0.01
+    } else {
+      player.x = blockHitX.block.x + blockHitX.block.w - offX + 0.01
+    }
+    player.vx = blockHitX.block.vx
+  }
+
+  const tileHitX = checkCollision(dt, player.x + offX, player.y + offY, player.hitboxW, player.hitboxH)
+  if (tileHitX) {
     if (player.vx > 0) {
       const hitRight = player.x + offX + player.hitboxW
       player.x = (Math.floor(hitRight / player.tileSize) * player.tileSize) - player.hitboxW - offX - 0.01
     } else if (player.vx < 0) {
       const hitLeft = player.x + offX
       player.x = ((Math.floor(hitLeft / player.tileSize) + 1) * player.tileSize) - offX + 0.01
+    } else {
+      const centerX = player.x + offX + (player.hitboxW / 2)
+      const relativeX = centerX % player.tileSize
+      if (relativeX > player.tileSize / 2) {
+        const hitRight = player.x + offX + player.hitboxW
+        player.x = (Math.floor(hitRight / player.tileSize) * player.tileSize) - player.hitboxW - offX - 0.01
+      } else {
+        const hitLeft = player.x + offX
+        player.x = ((Math.floor(hitLeft / player.tileSize) + 1) * player.tileSize) - offX + 0.01
+      }
     }
     player.vx = 0
   }
@@ -700,8 +889,22 @@ function updatePhysics(dt) {
   player.y += player.vy * dt
   player.grounded = false
 
-  if (checkCollision(dt, player.x + offX, player.y + offY, player.hitboxW, player.hitboxH)) {
-    if (player.vy > 0) {
+  const blockHitY = getMovingBlockHit(player.x + offX, player.y + offY, player.hitboxW, player.hitboxH)
+
+  if (blockHitY && blockHitY.axis === "y") {
+    if (blockHitY.ny < 0) {
+      player.y = blockHitY.block.y - player.hitboxH - offY - 0.01
+      player.grounded = true
+      player.coyoteTimer = player.coyoteTime
+    } else {
+      player.y = blockHitY.block.y + blockHitY.block.h - offY + 0.01
+    }
+    player.vy = blockHitY.block.vy
+  }
+
+  const tileHitY = checkCollision(dt, player.x + offX, player.y + offY, player.hitboxW, player.hitboxH)
+  if (tileHitY) {
+    if (player.vy >= 0) {
       const hitBottom = player.y + offY + player.hitboxH
       const tileTop = Math.floor(hitBottom / player.tileSize) * player.tileSize
       player.y = tileTop - player.hitboxH - offY - 0.01
@@ -711,7 +914,7 @@ function updatePhysics(dt) {
       player.y = ((Math.floor((player.y + offY) / player.tileSize) + 1) * player.tileSize) - offY + 0.01
     }
     player.vy = 0
-  } else {
+  } else if (!player.onMovingPlatform) {
     player.grounded = false
   }
 
@@ -719,8 +922,8 @@ function updatePhysics(dt) {
     killPlayer()
   }
 
-  const touchingLeft = checkCollision(dt, player.x + offX - 2, player.y + offY + 2, player.hitboxW, player.hitboxH - 4, true)
-  const touchingRight = checkCollision(dt, player.x + offX + 2, player.y + offY + 2, player.hitboxW, player.hitboxH - 4, true)
+  const touchingLeft = checkCollision(dt, player.x + offX - 2, player.y + offY + 2, player.hitboxW, player.hitboxH - 4, true) || (blockHitX && blockHitX.nx > 0)
+  const touchingRight = checkCollision(dt, player.x + offX + 2, player.y + offY + 2, player.hitboxW, player.hitboxH - 4, true) || (blockHitX && blockHitX.nx < 0)
 
   if (!touchingTrigger) {
     player.standingOnTrigger = false
@@ -799,7 +1002,7 @@ function handleEnemyCollision(enemy, dt) {
 
   if (py < ey) {
     // player stomped on enemy
-    player.vy = -getJumpHeight(5, player.yInertia, player.tileSize)
+    player.vy = -getJumpHeight(5, player.yInertia, player.tileSize).max
     return true
   } else {
     killPlayer()
@@ -862,6 +1065,7 @@ export function platformerLoop(dt) {
     }
   })
   if (!player.died) {
+    updateMovingBlocks(timeScale)
     updatePhysics(timeScale)
   }
   updateEnemyPhysics(timeScale)
@@ -910,6 +1114,7 @@ export function platformerLoop(dt) {
     drawPlayer(timeScale)
   }
   drawEnemies(timeScale)
+  drawMovingTiles(timeScale)
 }
 
 function logCurrentMapAsJSON() {

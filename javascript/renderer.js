@@ -22,6 +22,7 @@ export function updateColorTheme() {
   colorTheme.action = getThemeColor('--action')
   colorTheme.textOnAction = getThemeColor('--text-on-action')
   colorTheme.border = getThemeColor('--border')
+  colorTheme.selection = getThemeColor('--selection')
 }
 
 export function changeColorTheme(themeName) {
@@ -49,7 +50,12 @@ export function drawMinimap() {
       const raw = tiles[y * w + x]
       const tileId = raw >> 4
       const tileDef = editor.tileset[tileId]
-      ctx.fillStyle = tileDef.minimapColor || 'transparent'
+      if (tileDef) {
+        ctx.fillStyle = tileDef.minimapColor ?? 'transparent'
+      } else {
+        ctx.fillStyle = 'transparent'
+      }
+
       ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize)
     }
   }
@@ -259,6 +265,13 @@ export function getCameraCoords() {
   }
   return { x: x, y: y }
 }
+
+export function drawMovingTiles() {
+  player.movingBlocks.forEach(block => {
+    ctx.drawImage(block.image, Math.round(block.x - player.cam.x), Math.round(block.y - player.cam.y), player.tileSize, player.tileSize)
+  })
+}
+
 export function drawEnemies(dt) {
   enemies.forEach(enemy => {
     ctx.drawImage(editor.tileset[enemy.tileId].image, enemy.x - player.cam.x, enemy.y - player.cam.y, player.tileSize, player.tileSize)

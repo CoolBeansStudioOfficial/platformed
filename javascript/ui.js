@@ -71,10 +71,10 @@ export function toggleEditorUI(on) {
   const grid = document.querySelector(".grid")
   const minimap = document.querySelector('.minimap')
   if (on) {
-    grid.classList.remove("grid-uihidden")
+    grid?.classList.remove("grid-uihidden")
     if (minimap) minimap.style.display = 'block'
   } else {
-    grid.classList.add("grid-uihidden")
+    grid?.classList.add("grid-uihidden")
     if (minimap) minimap.style.display = 'none'
   }
   updateCanvasSize()
@@ -218,7 +218,6 @@ export function needsSmallerLevel() {
  */
 function mainEditorUi() {
   // add svgs 
-  addTopBarSVGs()
   addSvg('close.svg', '.close-wrapper', 30, 30, 'close-button', 'close')
 
   // top bar
@@ -321,6 +320,10 @@ function mainEditorUi() {
     editor.cam.y = mapY
     drawMinimap()
   }
+
+  minimap.addEventListener('mousemove', (e) => {
+    moveMinimap(e)
+  })
 
   minimap.addEventListener('mousedown', (e) => {
     mousedown = true
@@ -613,6 +616,7 @@ function menuUi() {
     openMenu()
   })
 
+  tilesetInput.value = editor.tilesetPath
   tilesetInput.addEventListener("input", () => {
     updateTileset(tilesetInput.value)
   })
@@ -623,12 +627,16 @@ function menuUi() {
 
 
   // -- physics --
+  const physicsVersion = document.querySelector("#physics-version")
   const jumpHeightSlider = document.querySelector('#jump-height-input')
-  const verticalInertiaSlider = document.querySelector('#vertical-inertia-input')
   const jumpWidthSlider = document.querySelector('#jump-width-input')
-  const horizontalInertiaSlider = document.querySelector('#horizontal-inertia-input')
   const bouncePadHeightSlider = document.querySelector('#bounce-pad-height-input')
   const walljumpInput = document.getElementById('walljump-input')
+  const slidiness = document.getElementById("slidiness-input")
+
+  slidiness.addEventListener("input", () => {
+    player.slidiness = seInt(slidiness.value)
+  })
 
   walljumpInput.addEventListener('input', () => {
     player.wallJump = walljumpInput.value
@@ -642,16 +650,13 @@ function menuUi() {
     player.jumpHeight = Number(jumpHeightSlider.value)
   })
 
-  verticalInertiaSlider.addEventListener('input', () => {
-    player.yInertia = Number(verticalInertiaSlider.value)
-  })
-
   jumpWidthSlider.addEventListener('input', () => {
     player.jumpWidth = Number(jumpWidthSlider.value)
   })
 
-  horizontalInertiaSlider.addEventListener('input', () => {
-    player.xInertia = Number(horizontalInertiaSlider.value)
+  physicsVersion.value = `${player.physicsVersion}`
+  physicsVersion.addEventListener("input", (e) => {
+    player.physicsVersion = parseInt(physicsVersion.value, 10)
   })
 
   // -- share --
@@ -750,6 +755,8 @@ function menuUi() {
   })
 
   // add color theme selection
+  const serverUrl = window.location.origin
+
   const swatches = document.querySelector(".color-theme .swatches")
   for (const theme of colorSchemes) {
     console.log(theme)
@@ -1080,8 +1087,8 @@ export function addTileSelection() {
             img.src = c.toDataURL()
           }
           img.src = editor.tileset[i].image.src
-        } else {
-          img.src = ''
+        } else if (c instanceof HTMLImageElement) {
+          img.src = c.src
         }
       }
       div.appendChild(img)

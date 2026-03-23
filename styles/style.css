@@ -13,31 +13,31 @@
 }
 
 [data-theme="cream"] {
-  --bg-primary: #f1e8d4;
-  --bg-accent: #cbc3b0;
-  --bg-level: #cae3f6;
+  --bg-primary: #EAE2D0;
+  --bg-accent: #D5C5B4;
+  --bg-level: #B5D4F0;
 
-  --action: black;
+  --action: #2D2A26;
 
-  --border: black;
+  --border: #2D2A26;
 
-  --text-on-primary: black;
-  --text-on-accent: black;
-  --text-on-action: #f1e8d4;
+  --text-on-primary: #2D2A26;
+  --text-on-accent: #2D2A26;
+  --text-on-action: #EAE2D0;
 }
 
 [data-theme="blue"] {
-  --bg-primary: #a8b7d3;
-  --bg-accent: #94a1c3;
-  --bg-level: #a3c9e5;
+  --bg-primary: #95B2E9;
+  --bg-accent: #647EC2;
+  --bg-level: #BCD4E6;
 
-  --action: black;
+  --action: #2D313F;
 
-  --border: black;
+  --border: #2D313F;
 
-  --text-on-primary: black;
-  --text-on-accent: black;
-  --text-on-action: #a8b7d3;
+  --text-on-primary: #2D313F;
+  --text-on-accent: #2D313F;
+  --text-on-action: #BCD4E6;
 }
 
 [data-theme="coffee"] {
@@ -52,6 +52,51 @@
   --text-on-primary: #dad0b0;
   --text-on-accent: #dad0b0;
   --text-on-action: #2f271b;
+}
+
+[data-theme="sailor"] {
+  --bg-primary: #0D0D32;
+  --bg-accent: #D7C0A7;
+  --bg-level: #D7C0A7;
+
+  --action: #D7C0A7;
+
+  --border: #D7C0A7;
+
+  --text-on-primary: #D7C0A7;
+  --text-on-accent: #0D0D32;
+  --text-on-action: #0D0D32;
+  --selection: black;
+}
+
+[data-theme="mahogany"] {
+  --bg-primary: #2A0C0D;
+  --bg-accent: #551C1D;
+  --bg-level: #D2BAA5;
+
+  --action: #D2BAA5;
+
+  --border: #D2BAA5;
+
+  --text-on-primary: #D2BAA5;
+  --text-on-accent: #D2BAA5;
+  --text-on-action: #2A0C0D;
+  --selection: black;
+}
+
+[data-theme="blackandwhite"] {
+  --bg-primary: black;
+  --bg-accent: #303030;
+  --bg-level: white;
+
+  --action: white;
+
+  --border: white;
+
+  --text-on-primary: white;
+  --text-on-accent: white;
+  --text-on-action: black;
+  --selection: black;
 }
 
 * {
@@ -139,6 +184,10 @@ body {
   grid-template-rows: 80px 1fr 0px;
 }
 
+.grid-uihidden .game {
+  border-radius: 0;
+}
+
 .grid-uihidden ::after {
   display: none;
 }
@@ -208,6 +257,39 @@ body {
 }
 
 /* here we go... */
+
+.svg.help {
+  mask-image: url("/assets/icons/help.svg");
+  width: 45;
+  height: 50;
+}
+
+.svg.undo {
+  mask-image: url("/assets/icons/undo.svg")
+}
+
+.svg.redo {
+  mask-image: url("/assets/icons/redo.svg")
+}
+
+.svg.save {
+  mask-image: url("/assets/icons/save.svg")
+}
+
+.svg.import {
+  mask-image: url("/assets/icons/import.svg")
+}
+
+.svg.play {
+  mask-image: url("/assets/icons/play_nofill.svg")
+}
+
+.svg.menu-button {
+  mask-image: url("/assets/icons/menu.svg");
+  width: 40px;
+  height: 50px;
+}
+
 .svg.arrow-right {
   width: 25px;
   height: 25px;
@@ -264,6 +346,27 @@ body {
 
 .svg.eraser {
   mask-image: url('/assets/icons/erase.svg')
+}
+
+.quick-actions .svg {
+  width: 35px;
+  height: 35px;
+}
+
+.svg.edit {
+  mask-image: url('/assets/icons/edit.svg');
+}
+
+.svg.view {
+  mask-image: url('/assets/icons/view.svg');
+}
+
+.svg.delete {
+  mask-image: url('/assets/icons/delete.svg');
+}
+
+.svg.settings {
+  mask-image: url('/assets/icons/settings.svg');
 }
 
 .sidebar-one {
@@ -644,9 +747,14 @@ button {
   font-size: 30px;
   outline: none;
   border: none;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-accent);
+  color: var(--text-on-accent);
   border-radius: 10px;
   font-family: "Fredoka", sans-serif;
+}
+
+.step select option {
+  color: var(--text-on-accent);
 }
 
 .step select.block,
@@ -673,6 +781,7 @@ div.step .options input.coord {
 }
 
 .step .options {
+  color: var(--text-on-accent);
   display: flex;
   justify-content: right;
   margin-right: 10p;
@@ -724,6 +833,7 @@ div.step .options input.coord {
 .share-link .link {
   margin: 0;
   font-size: 20px;
+  color: var(--text-on-action)
 }
 
 .share-link img {
@@ -1022,6 +1132,7 @@ input[type="radio"] {
   flex-direction: row;
   justify-content: center;
   gap: 30px;
+  flex-wrap: wrap;
 }
 
 .color-theme .swatches>div {

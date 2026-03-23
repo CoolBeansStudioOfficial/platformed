@@ -9,13 +9,13 @@ const { user, player, editor } = state
 export function createSpriteSheet(width) {
   const { tileset } = editor
 
-  const tileWidth = tileset[1].image.naturalHeight
-  console.log(tileWidth)
+  const tileWidth = tileset[1].image.naturalHeight || tileset[1].image.height
   const newTileset = { tiles: [], type: "spritesheet" }
   const framesToDraw = []
   let tileIndex = 0
 
   for (const tile of tileset) {
+    if (!tile) continue
     const imagesToProcess = tile.images ? tile.images : (tile.image ? [tile.image] : [])
 
     const tileY = Math.floor(tileIndex / width)
@@ -96,6 +96,7 @@ export async function loadMapFromData(json) {
   player.jumpWidth = json.jumpWidth ?? 7;
   player.yInertia = json.yInertia ?? 1;
   player.xInertia = json.xInertia ?? 1.5;
+  player.physicsVersion = json.physicsVersion ?? 1
   if (json.bouncePadHeight) {
     player.bouncePadHeight = json.bouncePadHeight;
   }
@@ -175,7 +176,7 @@ export function loadMap(path) {
       const tileLayer = json.layers.find(l => l.type === "tilelayer")
       const rotationLayer = json.layers.find(l => l.type === "rotation")
       const rawRotationLayer = decodeRLE(rotationLayer)
-      const rawTileLayer = decodeRLE(tileLayer.data)
+      let rawTileLayer = decodeRLE(tileLayer.data)
       if (rawTileLayer.length !== json.width * json.height) {
         console.warn('readData: data length not expected value', rawTileLayer.length, json.width * json.height)
       }
@@ -228,10 +229,9 @@ export function createMap(width = editor.map.w, height = editor.map.h, data = Ar
   const json = {}
   json.width = width
   json.height = height
+  json.physicsVersion = 2
   json.jumpHeight = player.jumpHeight
-  json.yInertia = player.yInertia
   json.jumpWidth = player.jumpWidth
-  json.xInertia = player.xInertia
   json.wallJump = player.wallJump
   json.bouncePadHeight = player.bouncePadHeight
   json.zoom = player.tileSize
@@ -302,13 +302,13 @@ async function loadSpriteSheetTileset(manifest) {
 
   const tileWidth = manifest.tileWidth
   const width = spriteSheet.naturalWidth / tileWidth
+  console.log(`width: ${width}`)
   for (const tile of manifest.tiles) {
     const dpr = window.devicePixelRatio
     const canvas = document.createElement("canvas")
     const ctx = canvas.getContext('2d')
     canvas.width = width
     canvas.height = width
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.imageSmoothingEnabled = false
     canvas.style.imageRendering = 'pixelated'
 
@@ -359,29 +359,31 @@ async function loadSpriteSheetTileset(manifest) {
     }
 
     let minimapColor = 'rgba(0, 0, 0, 0)'
-    try {
-      const imgData = ctx.getImageData(0, 0, width, width).data
-      const colorCounts = {}
-      let maxCount = 0
-      for (let i = 0; i < imgData.length; i += 4) {
-        const r = imgData[i]
-        const g = imgData[i + 1]
-        const b = imgData[i + 2]
-        const a = imgData[i + 3]
+    if (tile.type !== "empty") {
 
-        if (a < 128) continue
-        const rgb = `rgb(${r}, ${g}, ${b})`
-        colorCounts[rgb] = (colorCounts[rgb] || 0) + 1
+      try {
+        const imgData = ctx.getImageData(0, 0, width, width).data
+        const colorCounts = {}
+        let maxCount = 0
+        for (let i = 0; i < imgData.length; i += 4) {
+          const r = imgData[i]
+          const g = imgData[i + 1]
+          const b = imgData[i + 2]
+          const a = imgData[i + 3]
 
-        if (colorCounts[rgb] > maxCount) {
-          maxCount = colorCounts[rgb]
-          minimapColor = rgb
+          if (a < 128) continue
+          const rgb = `rgb(${r}, ${g}, ${b})`
+          colorCounts[rgb] = (colorCounts[rgb] || 0) + 1
+
+          if (colorCounts[rgb] > maxCount && colorCounts[rgb] > (imgData.length / 4) * 0.1) {
+            maxCount = colorCounts[rgb]
+            minimapColor = rgb
+          }
         }
+      } catch (e) {
+        console.warn("could not calculate minimap color", e)
       }
-    } catch (e) {
-      console.warn("could not calculate minimap color", e)
     }
-
     const tileObject = {
       ...tile,
       minimapColor: minimapColor,
@@ -413,17 +415,20 @@ export async function loadTileset(manifestPath) {
         const rawCharacterImage = fetch(manifest.path + "/" + manifest.characterFile)
         const blob = await rawCharacterImage.blob
 
-        let characterImage = null
-
-        characterImage = await new Promise((resolve) => {
+        const characterImage = await new Promise((resolve) => {
           const img = new Image()
           const prefix = manifest.path + "/"
           img.onload = () => resolve(img)
-          img.onerror = resolve(null)
+          img.onerror = (e) => {
+            console.error(`failed to load character image from: ${srcPath}`, e)
+            resolve(null)
+          }
           img.src = prefix + manifest.characterFile
         })
+
         loadedTilesets.set(manifestPath, tileset)
         loadedPlayers.set(manifestPath, characterImage)
+        console.log(characterImage)
         return { tileset, characterImage }
       }
 
@@ -464,11 +469,11 @@ export async function loadTileset(manifestPath) {
                 const b = imgData[i + 2]
                 const a = imgData[i + 3]
 
-                if (a < 128) continue
+                if (a < 128 || (r < 10 && g < 10 && b < 10)) continue
                 const rgb = `rgb(${r}, ${g}, ${b})`
                 colorCounts[rgb] = (colorCounts[rgb] || 0) + 1
 
-                if (colorCounts[rgb] > maxCount) {
+                if (colorCounts[rgb] > maxCount && colorCounts[rgb] > (imgData.length / 4) * 0.1) {
                   maxCount = colorCounts[rgb]
                   minimapColor = rgb
                 }
