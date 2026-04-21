@@ -92,17 +92,18 @@ export async function importMap(e) {
 }
 
 export async function loadMapFromData(json) {
+  player.requireCoins = json.requireCoins || false
   player.jumpHeight = json.jumpHeight ?? 2.5;
   player.jumpWidth = json.jumpWidth ?? 7;
   player.yInertia = json.yInertia ?? 1;
   player.xInertia = json.xInertia ?? 1.5;
   player.physicsVersion = json.physicsVersion ?? 1
+  editor.tilesetPath = json.tilesetPath ?? "/assets/medium.json"
   if (json.bouncePadHeight) {
     player.bouncePadHeight = json.bouncePadHeight;
   }
   if (json.zoom) {
     if (needsSmallerLevel()) {
-      console.log(json.zoom)
       player.tileSize = Math.round(Math.max(json.zoom / 1.5, 40))
       updatePhysicsConstants()
     }
@@ -169,36 +170,6 @@ export function decodeRLE(rle) {
   return out
 }
 
-export function loadMap(path) {
-  return fetch(path)
-    .then(response => response.json())
-    .then(json => {
-      const tileLayer = json.layers.find(l => l.type === "tilelayer")
-      const rotationLayer = json.layers.find(l => l.type === "rotation")
-      const rawRotationLayer = decodeRLE(rotationLayer)
-      let rawTileLayer = decodeRLE(tileLayer.data)
-      if (rawTileLayer.length !== json.width * json.height) {
-        console.warn('readData: data length not expected value', rawTileLayer.length, json.width * json.height)
-      }
-      rawTileLayer = rawTileLayer.map(id => id << 4)
-      for (let i = 0; i < rawTileLayer.length; i++) {
-        if (typeIs(rawTileLayer[i] >> 4)) {
-          rawTileLayer[i] = rawTileLayer[i] + rawRotationLayer[i]
-        }
-      }
-      editor.width = json.width
-      editor.height = json.height
-      let tiles = calculateAdjacencies(rawTileLayer, json.width, json.height)
-      tiles = new Uint16Array(tiles)
-      const map = {
-        tiles,
-        w: json.width,
-        h: json.height
-      }
-      return map
-    })
-}
-
 export function encodeRLE(list) {
   const rle = []
   let runVal = list[0]
@@ -229,7 +200,8 @@ export function createMap(width = editor.map.w, height = editor.map.h, data = Ar
   const json = {}
   json.width = width
   json.height = height
-  json.physicsVersion = 2
+  json.requireCoins = player.requireCoins
+  json.physicsVersion = player.physicsVersion
   json.jumpHeight = player.jumpHeight
   json.jumpWidth = player.jumpWidth
   json.wallJump = player.wallJump
@@ -265,9 +237,7 @@ export function createMap(width = editor.map.w, height = editor.map.h, data = Ar
 }
 
 export function loadPlayerSprites(playerImg) {
-  console.log("hello")
   if (!playerImg) return
-  console.log("hi")
   const h = playerImg.naturalHeight
   const w = playerImg.naturalWidth
   const sprites = []
@@ -302,7 +272,6 @@ async function loadSpriteSheetTileset(manifest) {
 
   const tileWidth = manifest.tileWidth
   const width = spriteSheet.naturalWidth / tileWidth
-  console.log(`width: ${width}`)
   for (const tile of manifest.tiles) {
     const dpr = window.devicePixelRatio
     const canvas = document.createElement("canvas")
@@ -394,7 +363,6 @@ async function loadSpriteSheetTileset(manifest) {
     }
     tileset.push(tileObject)
   }
-  console.log(tileset)
   return tileset
 }
 
@@ -409,7 +377,6 @@ export async function loadTileset(manifestPath) {
     .then(response => response.json())
     .then(async (manifest) => {
       if (manifest.type == "spritesheet") {
-        console.log("spritesheet")
         const tileset = await loadSpriteSheetTileset(manifest)
 
         const rawCharacterImage = fetch(manifest.path + "/" + manifest.characterFile)
@@ -428,7 +395,6 @@ export async function loadTileset(manifestPath) {
 
         loadedTilesets.set(manifestPath, tileset)
         loadedPlayers.set(manifestPath, characterImage)
-        console.log(characterImage)
         return { tileset, characterImage }
       }
 
@@ -521,6 +487,7 @@ export async function loadTileset(manifestPath) {
         })
     })
 }
+
 export function splitStripImages(tileset) {
   // split strip images 
   const newTileset = []
@@ -578,7 +545,6 @@ export function splitStripImages(tileset) {
 }
 
 export async function updateMap() {
-  console.log(user)
   let me
   if (!user || user.id == null) {
     // check whether the cookie exists
@@ -591,7 +557,6 @@ export async function updateMap() {
 
     if (me.ok) {
       const userJson = await me.json()
-      console.log(userJson)
       if (userJson.user !== undefined) {
         user.id = userJson.user
       }
@@ -643,7 +608,6 @@ export async function updateMap() {
     const levelId = await uploadLevel([
       ["data", createMap()]
     ])
-    console.log(await levelId)
     window.location.href = `/level/${await levelId}`
   }
 }

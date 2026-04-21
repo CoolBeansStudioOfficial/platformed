@@ -95,6 +95,9 @@ export const state = {
     }
   ],
   player: {
+    mute: false,
+    requireCoins: false,
+    coinsInLevel: 0,
     movingBlocks: [],
     physicsVersion: 2,
     slidiness: 0.8,

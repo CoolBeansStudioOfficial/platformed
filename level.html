@@ -1,15 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/styles/style.css">
-  <link rel="stylesheet" href="/styles/home.css">
-  <link rel="stylesheet" href="/styles/level.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/css/themes.css">
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/home.css" />
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/level.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet" />
   <title>Platformed</title>
 </head>
 
@@ -27,16 +29,22 @@
         <div class="game-wrapper">
           <div class="game">
             <canvas class="canvas"></canvas>
+
+            <div class="game-info">
+              <p class="collected-coins"></p>
+            </div>
+
             <div class="fullscreen-control">
               <div class="svg maximize"></div>
               <div class="svg minimize"></div>
             </div>
+
             <div class="mobile-controls hidden">
               <div class="joystick">
                 <div class="knob"></div>
               </div>
               <div class="jump">
-                <img src="/assets/icons/jump.svg" alt="">
+                <img src="/assets/icons/jump.svg" alt="" />
               </div>
             </div>
             <div class="loading-screen">
@@ -77,37 +85,40 @@
             <p class="description"></p>
             <div class="plays-wrapper">
               <p>plays/finishes</p>
-              <p class="plays-finshes"><span class="plays"></span>/<span class="finishes"></span></p>
+              <p class="plays-finshes">
+                <span class="plays"></span>/<span class="finishes"></span>
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <script type="module">
-
-  </script>
+  <script type="module"></script>
   <script type="module" src="/javascript/site.js"></script>
   <script type="module">
-    import { init, setMode } from '/javascript/site.js'
-    import { loadMapFromData, loadOwnerData } from '/javascript/file-utils.js'
-    setMode('play')
-    window.addEventListener('loading:progress', async (e) => {
-      const { loaded, total } = e.detail
-      const percentage = (loaded / total) * 100
-      document.querySelector('.progress-bar-fill').style.width = `${percentage}px`
-    })
-    window.addEventListener('level:loaded', async (e) => {
-      const levelData = await e.detail
-      await loadMapFromData(levelData.data)
-      init()
+    import {init, setMode} from "/javascript/site.js";
+    import {
+      loadMapFromData,
+      loadOwnerData,
+    } from "/javascript/file-utils.js";
+    setMode("play");
+    window.addEventListener("loading:progress", async (e) => {
+      const {loaded, total} = e.detail;
+      const percentage = (loaded / total) * 100;
+      document.querySelector(".progress-bar-fill").style.width =
+        `${percentage}px`;
+    });
+    window.addEventListener("level:loaded", async (e) => {
+      const levelData = await e.detail;
+      await loadMapFromData(levelData.data);
+      init();
 
-      const loadingScreen = document.querySelector('.loading-screen')
+      const loadingScreen = document.querySelector(".loading-screen");
       if (loadingScreen) {
-        loadingScreen.remove()
+        loadingScreen.remove();
       }
-
-    })
+    });
   </script>
   <script type="module" src="/javascript/level.js" defer></script>
 </body>

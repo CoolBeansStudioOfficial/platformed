@@ -4,22 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- preload modules -->
-  <link rel="modulepreload" href="/javascript/site.js">
-  <link rel="modulepreload" href="/javascript/load-editor-level.js">
-  <link rel="modulepreload" href="/javascript/editor.js">
-  <link rel="modulepreload" href="/javascript/renderer.js">
-  <link rel="modulepreload" href="/javascript/file-utils.js">
-  <link rel="modulepreload" href="/javascript/ui.js">
-  <link rel="modulepreload" href="/javascript/platformer.js">
-  <link rel="modulepreload" href="/javascript/state.js">
-  <link rel="modulepreload" href="/javascript/api.js">
-
   <script type="module" src="/javascript/site.js" defer></script>
   <script type="module" src="/javascript/load-editor-level.js" defer></script>
-  <link rel="stylesheet" href="/styles/style.css">
-  <link rel="stylesheet" href="/styles/login.css">
+  <link rel="stylesheet" href="/css/editor.css">
+  <link rel="stylesheet" href="/css/login.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap" rel="stylesheet">
@@ -126,14 +114,14 @@
               </select>
             </div>
             <div class="options">
-              <img src="/assets/icons/delete.svg" title="delete step">
+              <div class="svg delete on-accent"></div>
             </div>
           </div>
         </div>
       </div>
       <div class="buttons">
         <div id="new">
-          <img src="/assets/icons/plus.svg" title="add step">
+          <div class="svg new"></div>
         </div>
         <input type="submit" class="submit apply" value="apply">
       </div>
@@ -214,6 +202,10 @@
               <input type="number" class="number width" min="10" max="200" placeholder="100">
               <button class="resize">Resize</button>
             </div>
+          </div>
+          <div class="menu-item">
+            <label for="require-coins">Require all coins to finish</label>
+            <input type="checkbox" class="toggle" id="require-coins">
           </div>
         </div>
         <!-- Physics -->

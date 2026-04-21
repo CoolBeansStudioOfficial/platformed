@@ -1,103 +1,5 @@
-:root {
-  --bg-primary: #f1e8d4;
-  --bg-accent: #f1e8d4;
-  --bg-level: #cae3f6;
-
-  --action: black;
-
-  --border: black;
-
-  --text-on-primary: black;
-  --text-on-accent: black;
-  --text-on-action: #f1e8d4;
-}
-
-[data-theme="cream"] {
-  --bg-primary: #EAE2D0;
-  --bg-accent: #D5C5B4;
-  --bg-level: #B5D4F0;
-
-  --action: #2D2A26;
-
-  --border: #2D2A26;
-
-  --text-on-primary: #2D2A26;
-  --text-on-accent: #2D2A26;
-  --text-on-action: #EAE2D0;
-}
-
-[data-theme="blue"] {
-  --bg-primary: #95B2E9;
-  --bg-accent: #647EC2;
-  --bg-level: #BCD4E6;
-
-  --action: #2D313F;
-
-  --border: #2D313F;
-
-  --text-on-primary: #2D313F;
-  --text-on-accent: #2D313F;
-  --text-on-action: #BCD4E6;
-}
-
-[data-theme="coffee"] {
-  --bg-primary: #2f271b;
-  --bg-accent: #765d41;
-  --bg-level: #765d41;
-
-  --action: #dad0b0;
-
-  --border: #dad0b0;
-
-  --text-on-primary: #dad0b0;
-  --text-on-accent: #dad0b0;
-  --text-on-action: #2f271b;
-}
-
-[data-theme="sailor"] {
-  --bg-primary: #0D0D32;
-  --bg-accent: #D7C0A7;
-  --bg-level: #D7C0A7;
-
-  --action: #D7C0A7;
-
-  --border: #D7C0A7;
-
-  --text-on-primary: #D7C0A7;
-  --text-on-accent: #0D0D32;
-  --text-on-action: #0D0D32;
-  --selection: black;
-}
-
-[data-theme="mahogany"] {
-  --bg-primary: #2A0C0D;
-  --bg-accent: #551C1D;
-  --bg-level: #D2BAA5;
-
-  --action: #D2BAA5;
-
-  --border: #D2BAA5;
-
-  --text-on-primary: #D2BAA5;
-  --text-on-accent: #D2BAA5;
-  --text-on-action: #2A0C0D;
-  --selection: black;
-}
-
-[data-theme="blackandwhite"] {
-  --bg-primary: black;
-  --bg-accent: #303030;
-  --bg-level: white;
-
-  --action: white;
-
-  --border: white;
-
-  --text-on-primary: white;
-  --text-on-accent: white;
-  --text-on-action: black;
-  --selection: black;
-}
+@use 'theme';
+@use 'main';
 
 * {
   color: var(--text-on-primary);
@@ -105,7 +7,6 @@
 
 body {
   background-color: var(--bg-primary);
-  font-family: "Fredoka", sans-serif;
   font-weight: 500;
   margin: 0;
   scrollbar-width: none;
@@ -163,7 +64,6 @@ nav h1 {
   height: 25px;
   font-size: 20px;
   font-weight: 400;
-  font-family: "Fredoka", sans-serif;
   padding-left: 10px;
 }
 
@@ -175,8 +75,6 @@ nav h1 {
   width: 100px;
   background-color: var(--action);
   color: var(--text-on-action);
-  font-family: "Fredoka", sans-serif;
-  font-size: 20px;
   height: 33px;
   border: none;
   -webkit-text-fill-color: var(--bg-primary);
@@ -202,9 +100,9 @@ label.error-text {
   padding: 1px;
   padding-left: 10px;
   height: 25px;
-  border: 2px solid rgb(255, 0, 0);
+  border: 2px solid rgb(255 0 0);
   border-radius: 17px;
-  background-color: rgba(255, 0, 0, 0.4)
+  background-color: rgb(255 0 0 / 40%)
 }
 
 label.error-text:empty {
